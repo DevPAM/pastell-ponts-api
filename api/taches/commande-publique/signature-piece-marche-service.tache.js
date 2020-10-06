@@ -71,36 +71,81 @@ class SignaturePieceMarcheService extends Tache {
 
       // Récupération du noeud/fichier à signer.
       traceur.debuterAction("Récupération du noeud/fichier à signer.")
-      tache.obtenirNomContenuNoeud(donnees.idDocumentASigner)
+      swa.obtenirNomContenuNoeud(donnees.idDocumentASigner)
       .then(function( document_a_signer) {
 
         // Indicaion que la récupération du document à signer est ok.
         traceur.finirAction(true);
         // Récupération des documents annexes.
         traceur.debuterAction("Récupération des documents annexes.");
-        tache.obtenirNomsContenusNoeuds(donnees.idDocumentsAnnexes)
+        swa.obtenirNomsContenusNoeuds(donnees.idDocumentsAnnexes)
         .then(function( documents_annexes ){
 
           // Inidication que l'on a vien récupérer les fichiers annexes.
           traceur.finirAction(true);
           // Création du document dans Pastell.
-          traceur.debuterAction("Création du document dans Pastell.")
-          .then(function(document) {
+          traceur.debuterAction("Création du document dans Pastell.");
+          swp.creerDocument(parametres.ENTITE, parametres.DOCUMENT)
+          then(function(document) {
 
-          })
+            // Indication que la création du documents est ok.
+            traceur.finirAction(true);
+            // Modification du document.
+            tache.modifierDocumentCommandePublique(document.id_e, document.id_d, donnees.nomDossier, donnees.directionOperationnelle, donnees.numeroConsultation, donnees.objetConsultation, donnees.numeroMarche)
+            .then(function(modification) {
+
+              // Indication que la modification du document est ok.
+              traceur.finirAction(true);
+              // Attache le fichier à signer dans le document.
+              traceur.debuterAction("Attache le fichier à signer dans le document.");
+              swp.atacherFichierDocument(document.id_e, document.id_d, 'document_a_signer', null, document_a_signer);
+              .then(function (ajout_fichier_a_signer) {
+
+                // Indication que la modification du document est ok.
+                traceur.finirAction(true);
+                // Attache les fichiers annexes au document.
+                traceur.debuterAction("Attache les fichiers annexes au document.");
+                tache.ajouterFichierAnnexes(document.id_e, document.id_d, documents_annexes)
+                .then(function( ajout_fichier_annexes ){
+
+                  // Indication que la modification du document est ok.
+                  traceur.finirAction(true);
+                  // Vérification que le dossier puisse partir dans son flux.
+                  var verification = ajout_fichier_annexes != null ? ajout_fichier_a_signer.formulaire_ok : ajout_fichier_annexes.formulaire_ok;
+                  fi(verification == 0) {
+                    
+                    return ;
+                  } // FIN : Vérification que le dossier puisse partir dans son flux.
+
+
+                }) // FIN : Attache les fichiers annexes au document.
+                // ERREUR : Attache les fichiers annexes au document.
+                .catch(function(erreur){ tache.gererErreurNiveau2(traceur, erreur, donnees.idDocumentASigner); });
+
+              }) // FIN : Attache le fichier à signer dans le document.
+              // ERREUR : Attache le fichier à signer dans le document.
+              .catch(function(erreur) { tache.gererErreurNiveau2(traceur, erreur, donnees.idDocumentASigner); })
+
+            }) // FIN : Modification du document.
+            // ERREUR : Modification du document.
+            .catch( function(erreur) { tache.gererErreurNiveau2(traceur, erreur, donnees.idDocumentASigner); } )
+
+          }) // FIN : Création du document dans Pastell.
+          // ERREUR : Création du document dans Pastell.
+          .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur, donnees.idDocumentASigner); })
 
         }) // FIN : Récupération des documents annexes.
         // ERREUR : Récupération des documents annexes.
-        .catch( function(erreur) { tache.gererErreurNiveau1(traceur, erreur); });
+        .catch( function(erreur) { tache.gererErreurNiveau1(traceur, erreur, donnees.idDocumentASigner); });
 
 
       }) // FIN : Récupération du noeud/fichier à signer.
       // ERREUR : Récupération du noeud/fichier à signer.
-      .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur) });
+      .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur, donnees.idDocumentASigner) });
 
     }) // FIN : Verouillage du fichier à signer.
     // ERREUR : Verouillage du fichier à signer.
-    .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); });
+    .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur, donnees.idDocumentASigner); });
   }
   /** Gère le succès de la tache.
     * @param traceur Le traceur d'actions. */
@@ -112,19 +157,22 @@ class SignaturePieceMarcheService extends Tache {
   }
   /** Gère une erreur de niveau 2.
     * @param traceur Le traceur d'erreur.
-    * @param erreur L'erreur levé. */
-  gererErreurNiveau2(traceur, erreur, id_dossier_cree) {
-    console.log(id_dossier_cree);
+    * @param erreur L'erreur levée. */
+  gererErreurNiveau2(traceur, erreur, id_noeud, id_document) {
     // Suppression du dossier.
-    var swa = new AlfrescoService();
-    swa.supprimerNoeudAsync(id_dossier_cree);
+    var swp = new PastellService();
+    // Suppression du document su Pastell.
+    swp.supprimerDocument(id_document);
     // Gestion de la suite de erreur
-    this.gererErreurNiveau1(traceur, erreur);
+    this.gererErreurNiveau1(traceur, erreur, id_noeud);
   }
   /** Gère une erreur de niveau 1.
     * @param traceur Le traceur d'erreur.
     * @param erreur L'erreur lancer par le système. */
-  gererErreurNiveau1(traceur, erreur){
+  gererErreurNiveau1(traceur, erreur, id_noeud){
+    var swa = new AlfrescoService();
+    // Dévérouillage du noued.
+    swp.deverouillerNoeud(id_noeud);
     // Fin e l'action de récupération des informations pastell.
     traceur.finirAction(false);
     // Initialisation de l'erreur.
@@ -138,6 +186,34 @@ class SignaturePieceMarcheService extends Tache {
     var swa = new AlfrescoService();
     var detail = await swa.detailNoeud(id_noeud);
     return { nom : detail.entry.name, id_parent : detail.parentId, contenu : await swa.obtenirListeNoeudsEnfants(id_noeud) };
+  }
+  /** Méthode permettant de modifier un document de la commmande publique.
+    * @param id_entite L'identifiant de l'entite.
+    * @param id_document L'identifiant du document.
+    * @param nom_dossier Le nom du dossier.
+    * @param direction_operationnelle La direction opérationnelle.
+    * @param numero_consultation Le numero de la consultation.
+    * @param objet_consultation L'objet de la consultation.
+    * @param numero_marche Le numéro du marché. */
+  async modifierDocumentCommandePublique(id_entite, id_document, nom_dossier, direction_operationnelle, numero_consultation, objet_consultation, numero_marche) {
+    var swp = new PastellService();
+    // Initialisation des données.
+    var donnees = { nom_dossier: nom_dossier, direction_operationnelle: direction_operationnelle, numero_consultation: numero_consultation, objet_consultation : objet_consultation, numero_marche : numero_marche, iparapheur_sous_type : 'SS_Type_signatures_marchés', iparapheur_type : 'Type_signature_marchés' };
+    // Appel du service.
+    return await swp.modifierDocument(id_entite, id_document, donnees);
+  }
+  /** Méthode permettant d'ajouter des fichiers annexes au document.
+    * @param id_entite L'identifiant de l'entité.
+    * @param id_document L'identifiant du document.
+    * @param fichiers_annexes Les fichiers annexes. */
+  async ajouterFichierAnnexes(id_entite, id_document, fichiers_annexes) {
+    var resultat = null;
+    var swp = new PastellService();
+    // Ajoute des fichier au sein du documents.
+    for(var i=0; i<fichiers_annexes.length; i++)
+      resultat = await swp.atacherFichierDocument(document.id_e, document.id_d, 'documents_annexes', i, document_a_signer);
+    // Retour du résultat.
+    return resultat;
   }
 }
 // Export du module.
