@@ -8,7 +8,7 @@ class ModifierNoeud extends AlfrescoAppelService {
     * @param id_noeud L'identifiant du noeud.
     * @param proprietes Les éléments à modifier sur le noeud. */
   constructor(id_noeud, proprietes) {
-    super('PUT', 'nodes/'+id_noeud_parent);
+    super('PUT', 'nodes/'+id_noeud);
     this.proprietes = proprietes;
   }
   /** Appel le service web. */
