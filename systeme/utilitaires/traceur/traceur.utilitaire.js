@@ -11,6 +11,7 @@ class Traceur {
     this.succes = null;
     this.erreur = null;
     this.donnees = { };
+    this.message = null;
     this.service = service;
     this.debut = new Date();
     this.parametres = parametres;
@@ -35,16 +36,17 @@ class Traceur {
   /** Ajoute une erreur et indque l'execution en erreur.
     * @param erreur L'erreur retourner par le service. */
   log(erreur) {
-    this.succes = false;
     this.erreur = erreur;
+  }
+  /** Modifie le message du traceur.
+    * @param message*/
+  finirTrace(succes, message) {
+    this.succes = succes;
     this.fin = Date.now();
+    this.message = message;
   }
   /** Transforme en JSON de la classe. */
-  JSON(message) {
-    // La récupération JSON de l'iformation indique un retour au client donc test
-    if(this.succes == null) this.succes = true;
-    // Mise en place de la date de fin de la tâche.
-    this.fin = Date.now();
+  JSON() {
     // Récupération des actions au format JSON.
     var actions = [];
     for(var i=0; i<this.actions.length; i++)
@@ -52,7 +54,7 @@ class Traceur {
     // Retour du format JSON.
     return  {
       succes : this.succes,
-      message : message,
+      message : this.message,
       erreur_service : this.erreur,
       informations : {
         service : this.service,
@@ -65,6 +67,39 @@ class Traceur {
       actions : actions,
       donnees : this.donnees
     };
+  }
+  /** Transforme en Texte de la classe. */
+  TEXT() {
+    var resultat = "===================================================================================================================\n";
+    // Date de début de l'action.
+    resultat += "DATE : "+ this.dateEnChaine(this.debut) + "\n";
+    // Heures
+    resultat += "DEBUT : "+ this.dateEnHeure(this.debut) + "\n";
+    resultat += "FIN : "+ this.dateEnHeure(this.fin) + "\n";
+    // Temps d'execution
+    resultat += "TEMPS D'EXECUTION : "+ (this.fin - this.debut) + 'ms' + "\n";
+    // Le succes de la requête.
+    resultat += "SUCCES :"+ this.succes +"\n";
+    // Le message.
+    resultat += "MESSAGE : "+ this.message +"\n";
+    // L'erreur.
+    if(this.erreur != null) {
+      try{ resultat += "ERREUR : " +JSON.stringify(this.erreur) + "\n";
+      }catch(erreur){ resultat += "ERREUR : " + this.erreur+"\n"; }
+    }
+    // Les actions.
+    for(var i=0; i<this.actions.length; i++)
+      resultat +=  this.actions[i].TEXT();
+    // parametres utilisés
+    resultat += "PARAMETRES : ";
+    try{ resultat += JSON.stringify(this.parametres) + "\n";
+  }catch(erreur) { resultat += this.parametres + "\n"; };
+    // Donnees
+    resultat += "DONNEES : ";
+    try{ resultat += JSON.stringify(this.donnees) + "\n";
+    }catch(erreur) { resultat += this.donnees + "\n"; } ;
+    // Retour du résulat.
+    return resultat;
   }
   /** Traduit une date en chaîne de caractères.
     * @param date La date à traduire. */

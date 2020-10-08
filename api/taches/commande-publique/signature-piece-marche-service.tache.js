@@ -41,144 +41,199 @@ class SignaturePieceMarcheService extends Tache {
     var swp = new PastellService();
     var swa = new AlfrescoService();
     var traceur = new Traceur(parametres.SERVICE+'-service', super.obtenirCorpsRequete().body);
-
-    // Vérification des préconditions.
-    traceur.debuterAction('Vérification des préconditions.');
-    var preconditions = this.verifierPreconditions();
-    // Si les préconditions ne sont pas respecté arret de la routine.
-    if(!preconditions.respect){
-      // Trace du résultat de la préconditions.
-      traceur.finirAction(false);
-      traceur.log(preconditions);
-      // Envoie de la réponse
-      super.envoiReponse(500, traceur.JSON(preconditions.message));
-      // Fin
-      return;
-    } else {
-      // Indication que l'action précédente est OK.
+    // Insertion en base de données de l'appel service.
+    traceur.debuterAction("Insertion en base de données de l'appel service : "+parametres.SERVICE)
+    bdd.debuterAppelService(parametres.SERVICE)
+    .then(function(id_appel) {
+      // Fin de l'action.
       traceur.finirAction(true);
-      // Récupérationd es données de la requête.
-      donnees = preconditions.donnees;
-    }
-
-    // Verouillage du fichier à signer.
-    traceur.debuterAction("Verouillage du noeud/fichier à signer.");
-    swa.verouillerNoeud(donnees.idDocumentASigner)
-    .then(function(document) {
-
-      // Le verouillage est ok
-      traceur.finirAction(true);
-
-      // Récupération du noeud/fichier à signer.
-      traceur.debuterAction("Récupération du noeud/fichier à signer.")
-      swa.obtenirNomContenuNoeud(donnees.idDocumentASigner)
-      .then(function( document_a_signer) {
-
-        // Indicaion que la récupération du document à signer est ok.
+      // Vérification des préconditions.
+      traceur.debuterAction("Vérification des préconditions.")
+      var preconditions = this.verifierPreconditions();
+      // Si les préconditions ne sont pas respecté arret de la routine.
+      if(!preconditions.respect){
+        // Trace du résultat de la préconditions.
+        tache.gererErreurNiveau4(traceur, preconditions, null, id_appel, null, preconditions.message);
+        // Fin
+        return;
+      } else {
+        // Indication que l'action précédente est OK.
         traceur.finirAction(true);
-        // Récupération des documents annexes.
-        traceur.debuterAction("Récupération des documents annexes.");
-        swa.obtenirNomsContenusNoeuds(donnees.idDocumentsAnnexes)
-        .then(function( documents_annexes ){
-
-          // Inidication que l'on a vien récupérer les fichiers annexes.
+        // Récupérationd es données de la requête.
+        donnees = preconditions.donnees;
+      }
+      // Vérouillage du noeud.
+      swa.verouillerNoeud(donnees.idDocumentASigner)
+      .then(function(verrouillage) {
+        // Trace du résultat du vérouillage.
+        traceur.finirAction(true);
+        // Récupération du fichier à signer.
+        traceur.debuterAction("Récupération du fichier à signer ("+donnees.idDocumentASigner+").")
+        tache.obtenirNomContenuNoeud(donnees.idDocumentASigner)
+        .then(function(fichier_a_signer) {
+          // Trace du résultat de récupération du fichier à signer.
           traceur.finirAction(true);
-          // Création du document dans Pastell.
-          traceur.debuterAction("Création du document dans Pastell.");
-          swp.creerDocument(parametres.ENTITE, parametres.DOCUMENT)
-          then(function(document) {
-
-            // Indication que la création du documents est ok.
+          // Récupération des documents annexes.
+          traceur.debuterAction("Récupération des documents annexes.");
+          tache.obtenirNomsContenusNoeuds(donnees.idDocumentsAnnexes)
+          .then(function(fichiers_annexes) {
+            // Trace du résultat de récupération des fichiers annexes.
             traceur.finirAction(true);
-            // Modification du document.
-            tache.modifierDocumentCommandePublique(document.id_e, document.id_d, donnees.nomDossier, donnees.directionOperationnelle, donnees.numeroConsultation, donnees.objetConsultation, donnees.numeroMarche)
-            .then(function(modification) {
-
-              // Indication que la modification du document est ok.
+            // Création du document Pastell.
+            traceur.debuterAction("Création du document Pastell.")
+            tache.creerDocument(parametres.ENTITE, parametres.DOCUMENT)
+            .then(function(document) {
+              // Trace du résultat de la création du document.
               traceur.finirAction(true);
-              // Attache le fichier à signer dans le document.
-              traceur.debuterAction("Attache le fichier à signer dans le document.");
-              swp.atacherFichierDocument(document.id_e, document.id_d, 'document_a_signer', null, document_a_signer);
-              .then(function (ajout_fichier_a_signer) {
-
-                // Indication que la modification du document est ok.
+              // Modification des données du document.
+              tache.modifierDocumentCommandePublique(document.id_e, document.id_d, donnees.nomDossier, donnees.directionOperationnelle, donnees.numeroConsultation, donnees.objetConsultation, donnees.numeroMarche)
+              .then(document_modifier) {
+                // Trace du résultat de modification du document.
                 traceur.finirAction(true);
-                // Attache les fichiers annexes au document.
-                traceur.debuterAction("Attache les fichiers annexes au document.");
-                tache.ajouterFichierAnnexes(document.id_e, document.id_d, documents_annexes)
-                .then(function( ajout_fichier_annexes ){
-
-                  // Indication que la modification du document est ok.
+                // Ajout du fichier à signer au document.
+                traceur.debuterAction("Ajout du fichier à signer au document.")
+                swp.atacherFichierDocument(document.id_e, document.id_d, "document_a_signer", null, fichier_a_signer)
+                .then(function(ajout_fichier_a_signer){
+                  // Trace du résultat de modification du document.
                   traceur.finirAction(true);
-                  // Vérification que le dossier puisse partir dans son flux.
-                  var verification = ajout_fichier_annexes != null ? ajout_fichier_a_signer.formulaire_ok : ajout_fichier_annexes.formulaire_ok;
-                  fi(verification == 0) {
-                    
-                    return ;
-                  } // FIN : Vérification que le dossier puisse partir dans son flux.
-
-
-                }) // FIN : Attache les fichiers annexes au document.
-                // ERREUR : Attache les fichiers annexes au document.
-                .catch(function(erreur){ tache.gererErreurNiveau2(traceur, erreur, donnees.idDocumentASigner); });
-
-              }) // FIN : Attache le fichier à signer dans le document.
-              // ERREUR : Attache le fichier à signer dans le document.
-              .catch(function(erreur) { tache.gererErreurNiveau2(traceur, erreur, donnees.idDocumentASigner); })
-
-            }) // FIN : Modification du document.
-            // ERREUR : Modification du document.
-            .catch( function(erreur) { tache.gererErreurNiveau2(traceur, erreur, donnees.idDocumentASigner); } )
-
-          }) // FIN : Création du document dans Pastell.
-          // ERREUR : Création du document dans Pastell.
-          .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur, donnees.idDocumentASigner); })
-
-        }) // FIN : Récupération des documents annexes.
-        // ERREUR : Récupération des documents annexes.
-        .catch( function(erreur) { tache.gererErreurNiveau1(traceur, erreur, donnees.idDocumentASigner); });
-
-
-      }) // FIN : Récupération du noeud/fichier à signer.
-      // ERREUR : Récupération du noeud/fichier à signer.
-      .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur, donnees.idDocumentASigner) });
-
-    }) // FIN : Verouillage du fichier à signer.
-    // ERREUR : Verouillage du fichier à signer.
-    .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur, donnees.idDocumentASigner); });
+                  // Ajout des fichiers annexes au document.
+                  traceur.debuterAction("Ajout du fichier à signer au document.");
+                  tache.ajouterFichierAnnexes(document.id_e, document.id_d, fichiers_annexes)
+                  .then(function(ajouter_fichiers_annexes) {
+                    // Trace de l'ajout des fichiers annexes au document.
+                    traceur.finirAction(true);
+                    // Vérification que le document est prêt pour lson orientation.
+                    traceur.debuterAction("Vérification que le document est prêt pour son orientation.");
+                    var verification = ajouterFichierAnnexes == null ? ajout_fichier_a_signer : ajouter_fichiers_annexes;
+                    if(verification.formulaire_ok == 0) {
+                      tache.gererErreurNiveau4(traceur, { message : verification.message }, donnees.idDocumentASigner, document, verification.message);
+                      return;
+                    }
+                    // Trace la vérification deu l'erreur.
+                    traceur.finirAction(true);
+                    // Envoi du document vers son orientation.
+                    traceur.debuterAction("Envoi du document vers son orientation.");
+                    swp.lancerActionDocument(document.id_e, document.id_d, "orientation")
+                    .then(function(lancement_action) {
+                      traceur.finirAction(true);
+                      // Envoie de la réponse au client.
+                      tache.gererSucces(traceur, id_appel);
+                    }) // FIN : Envoi du document vers son orientation.
+                    // ERREUR : Envoi du document vers son orientation.
+                    .catch( function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, document); } )
+                  }) // FIN : Ajout des fichiers annexes au document.
+                  // ERREUR : Ajout des fichiers annexes au document.
+                  .catch(function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, document); })
+                }) // FIN : Ajout du fichier à signer au document.
+                // ERREUR : Ajout du fichier à signer au document.
+                .catch(function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, document); })
+              } // FIN : Modification des données du document.
+              // ERREUR : Modification des données du document.
+              .catch(function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, document); })
+            }) // FIN : Création du document Pastell.
+            // ERREUR : Création du document Pastell.
+            .catch(function(erreur) { gererErreurNiveau2(traceur, erreur, id_appel, donnees.idDocumentASigner); })
+          }) // FIN : Récupération des documents annexes.
+          // ERREUR : Récupération des documents annexes.
+          .catch(function(erreur) { tache.gererErreurNiveau2(traceur, erreur, id_appel, donnees.idDocumentASigner); });
+        }) // FIN : Récupération du fichier à signer.
+        // ERREUR : Récupération du fichier à signer
+        .catch(function(erreur) { tache.gererErreurNiveau2(traceur, erreur, id_appel, donnees.idDocumentASigner); })
+      }) // FIN : Vérouillage du noeud.
+      // FIN ERREUR : Vérouillage du noeud.
+      .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur, id_appel); })
+    }) // FIN : Insertion en base de données de l'appel service.
+    // ERREUR : Insertion en base de données de l'appel service.
+    .catch(function(erreur) { tache.gererErreurNiveau0(traceur, erreur); });
   }
-  /** Gère le succès de la tache.
-    * @param traceur Le traceur d'actions. */
-  gererSucces(traceur) {
-    // Fin e l'action de récupération des informations pastell.
-    traceur.finirAction(true);;
-    // Envoie de la réponse.
-    this.envoiReponse(200, traceur.JSON(parametres.MESSAGE_SUCCES_ROUTINE));
+  /** Méthode peremttant de gérer le succes de l'appel du service.
+    * @param id_appel L'identifiant d'un appel service.
+    * @param document Le document Pastell. */
+  gererSucces(traceur, id_appel, document) {
+    var bdd = new PontBDD();
+    // Fin de l'appel.
+    bdd.finirAppel(id_appel, 1);
+    // Ajout des documents au dossier en base de données.
+    bdd.insererDocumentFichier(id_appel, document.id_e, document.id_d, parametres.DOCUMENT, id_fichier);
+    // Trace de la fin du service.
+    traceur.finirTrace(true, parametres.MESSAGE_SUCCES_SERVICE);
+    // Envoie de la réponse au client.
+    this.envoiReponse(500, traceur);
   }
-  /** Gère une erreur de niveau 2.
+  /** Gère une erreur de niveau 4.
     * @param traceur Le traceur d'erreur.
-    * @param erreur L'erreur levée. */
-  gererErreurNiveau2(traceur, erreur, id_noeud, id_document) {
-    // Suppression du dossier.
-    var swp = new PastellService();
-    // Suppression du document su Pastell.
-    swp.supprimerDocument(id_document);
-    // Gestion de la suite de erreur
-    this.gererErreurNiveau1(traceur, erreur, id_noeud);
-  }
-  /** Gère une erreur de niveau 1.
-    * @param traceur Le traceur d'erreur.
-    * @param erreur L'erreur lancer par le système. */
-  gererErreurNiveau1(traceur, erreur, id_noeud){
+    * @param erreur L'erreur lancer par le système.
+    * @param id_appel L'identifiant de l'appel.
+    * @param id_noeud L'identifiant d'un noeud. */
+  gererErreurNiveau4(traceur, erreur, id_noeud, id_appel, document, message) {
     var swa = new AlfrescoService();
+    var swp = new PastellService();
+    var bdd = new PontBDD();
+    // Suppression du document su Pastell.
+    swp.lancerActionDocument(id_document);
     // Dévérouillage du noued.
-    swp.deverouillerNoeud(id_noeud);
+    if(id_noeud != null) swa.deverouillerNoeud(id_noeud);
+    // Suppression du document su Pastell.
+    if(document != null) swp.lancerActionDocumentAsync(document.id_e, document.id_d, "suppression");
+    // Fin de l'appel.
+    bdd.finirAppel(id_appel, 0);
     // Fin e l'action de récupération des informations pastell.
     traceur.finirAction(false);
     // Initialisation de l'erreur.
     traceur.log(erreur);
+    // Fin de l'appel.
+    finirTrace(false, message)
     // Envoie de la réponse.
-    this.envoiReponse(500, traceur.JSON(parametres.MESSAGE_ERREUR_ROUTINE));
+    this.envoiReponse(500, traceur);
+  }
+  /** Gère une erreur de niveau 3.
+    * @param traceur Le traceur d'erreur.
+    * @param erreur L'erreur lancer par le système.
+    * @param id_appel L'identifiant de l'appel.
+    * @param id_noeud L'identifiant d'un noeud. */
+  gererErreurNiveau3(traceur, erreur, id_appel, id_noeud, document) {
+    var swp = new PastellService();
+    // Suppression du document su Pastell.
+    swp.lancerActionDocumentAsync(document.id_e, document.id_d, "suppression");
+    // Suite de la gestion d'erreur.
+    this.gererErreurNiveau2(traceur,erreur,id_appel,id_noeud);
+  }
+  /** Gère une erreur de niveau 2.
+    * @param traceur Le traceur d'erreur.
+    * @param erreur L'erreur lancer par le système.
+    * @param id_appel L'identifiant de l'appel.
+    * @param id_noeud L'identifiant d'un noeud. */
+  gererErreurNiveau2(traceur, erreur, id_appel, id_noeud) {
+    var swa = new AlfrescoService();
+    // Dévérouillage du noued.
+    swa.deverouillerNoeud(id_noeud);
+    // Gestion de la suite de erreur
+    this.gererErreurNiveau1(traceur, erreur, id_appel);
+  }
+  /** Gère une erreur de niveau 1.
+    * @param traceur Le traceur d'erreur.
+    * @param erreur L'erreur lancer par le système.
+    * @param id_appel L'identifiant de l'appel. */
+  gererErreurNiveau1(traceur, erreur, id_appel){
+    var bdd = new PontBDD();
+    // Find e l'appel.
+    bdd.finirAppel(id_appel, id_noeud);
+    // Dévérouillage du noued
+    this.gererErreurNiveau0(traceur, erreur);
+  }
+  /** Gere les erreur de niveau zéro.
+    * @param traceur Le traceur d'erreur.
+    * @param erreur L'erreur lancer par le système.
+    * @param id_noeud L'identifiant d'un noeud. */
+  gererErreurNiveau0(traceur, erreur) {
+    // Fin e l'action de récupération des informations pastell.
+    traceur.finirAction(false);
+    // Initialisation de l'erreur.
+    traceur.log(erreur);
+    // Fin de l'appel service.
+    traceur.finirTrace(false, parametres.MESSAGE_ERREUR_ROUTINE)
+    // Envoie de la réponse.
+    this.envoiReponse(500, traceur);
   }
   /** Permet de récupérer le contenu d'un noeud et son nom de fichier.
     * @param id_noeud L'identifiant du noeud. */

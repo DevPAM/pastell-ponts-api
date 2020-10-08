@@ -2,7 +2,7 @@ const ListerEntites = require('./appels/entites/lister-entites.appel.js');
 const CreerDocument = require('./appels/documents/creer-document.appel.js');
 const DetailDocument = require('./appels/documents/detail-document.appel.js');
 const ObtenirFichier = require('./appels/documents/obtenir-fichier.appel.js');
-const AttacherFichierDocument = require('./appels/documents/attacher-fichier-document.appel.js');
+const ActionDocument = require('./appels/documents/action-document.appel.js');
 
 /** Classe représentant un service web. */
 class PastellService {
@@ -24,20 +24,33 @@ class PastellService {
     var appel = new ObtenirFichier(id_entite, id_document, nom_fichier, index);
     return await appel.appeler();
   }
-  /** Méthode permetant de créer un document dans pastell.
-    * @param nom_entite L'identifiant de l'entité ou créé le dossier Pastell.
-    * @param type_document Le type de document à creer dans l'entite. */
-  async CreerDocument(nom_entite, type_document) {
+  /** Liste les entités disponible sur Pastell. */
+  async listerEntites() {
     // Récupération de la liste des entité disponible dans Pastell.
-    var liste_entites = new ListerEntites().appeler();
-    // Recherche de notre entité dans la liste.
+    var appel = new ListerEntites();
+    return appel.appeler();
+  }
+  /** Recherche une entité au sein de la liste des entités.
+    * @param nom_entite Le nom ed l'entité. */
+  async obtenirEntite(nom_entite) {
+    // Récupération de la liste des entités.
+    var liste = await this.listerEntites();
     var index = 0;
+    // Recherche de l'entités au seind e la liste.
     while(index < liste_entites.length && liste_entites[index].denomination.toLowerCase() != nom_entite.toLowerCase())
       index++;
     // Vérification que l'entite a été trouvé.
     if(index == liste_entites.length) throw "L'entité '"+nom_entite+"' n'existe pas en sur Pastell.";
+    // Retour de l'identifiant de l'entité.
+    return liste_entites[index].id_e;
+  }
+  /** Méthode permetant de créer un document dans pastell.
+    * @param nom_entite L'identifiant de l'entité ou créé le dossier Pastell.
+    * @param type_document Le type de document à creer dans l'entite. */
+  async creerDocument(nom_entite, type_document) {
+    var id_entite = await this.obtenirEntite(nom_entite);
     // Création du document.
-    return (await new CreerDocument(liste_entites[index].id_e, type).appeler());
+    return (await new CreerDocument(id_entite, type).appeler());
   }
   /** Méthode permettant de modifier un document.
     * @param donnees Les données à modifier sur le document. */
@@ -54,6 +67,22 @@ class PastellService {
   async atacherFichierDocument(id_entite, id_document, id_parametre, index, fichier) {
     var appel = new AttacherFichierDocument(id_entite, id_document, id_parametre, index, fichier);
     return await appel.appeler();
+  }
+  /** Lance un action sur le document.
+    * @param id_entite L'identifiant alfresco du document.
+    * @param id_document L'id_entifiant du document.
+    * @param action L'action à executer. */
+  async lancerActionDocument(id_entite, id_document, action) {
+    var appel = new ActionDocument(id_entite, id_document, action);
+    return await appel.appeler();
+  }
+  /** Lance un action sur le document.
+    * @param id_entite L'identifiant alfresco du document.
+    * @param id_document L'id_entifiant du document.
+    * @param action L'action à executer. */
+  lancerActionDocumentAsync(id_entite, id_document, action) {
+    var appel = new ActionDocument(id_entite, id_document, action);
+    appel.appelerAsync();
   }
 }
 // Export du module.

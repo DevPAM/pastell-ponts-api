@@ -1,5 +1,6 @@
 const CreerNoeud = require('./appels/noeuds/creer_noeud.appel.js');
 const DetailNoeud = require('./appels/noeuds/detail_noeud.appel.js');
+const ModifierNoeud = require('./appels/noeuds/modifier_noeud.appel.js');
 const SupprimerNoeud = require('./appels/noeuds/supprimer_noeud.appel.js');
 const VerouillerNoeud = require('./appels/noeuds/verouiller_noeud.appel.js');
 const DeverouillerNoeud = require('./appels/noeuds/deverouiller_noeud.appel.js');
@@ -15,6 +16,12 @@ class AlfrescoService {
     * @param id_noeud L'identifiant du noeud. */
   async detailNoeud(id_noeud) {
     var appel = new DetailNoeud(id_noeud);
+    return await appel.appeler();
+  }
+  /** Méthode permettant de modifier un noeud.
+    * @param id_noeud L'identifiant Alfresco du noeud. */
+  async modifierNoeud(id_noeud, proprietes) {
+    var appel = new ModifierNoeud(id_noeud, proprietes);
     return await appel.appeler();
   }
   /** Méthode permettant de créer un noeud dans un noeud.

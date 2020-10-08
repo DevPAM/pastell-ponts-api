@@ -26,6 +26,10 @@ class Action {
       temps_execution : this.temps_execution+'ms'
     };
   }
+  /** Traduit en texte la classe. */
+  TEXT() {
+    return "----------------------------------------------------------------------------------------------------------------\nACTION : " + this.action +"\nEXECUTION : "+ (this.execution ? "OK" : "ERREUR") +"\nDEBUT : "+ this.dateEnChaine(this.date_debut) + "\nFIN : "+this.dateEnChaine(this.date_fin) + "\nTEMPS D'EXECUTION : "+this.temps_execution+"ms\n";
+  }
   /** Traduit une date en chaîne de caractères.
     * @param date La date à traduire. */
     dateEnChaine(date){

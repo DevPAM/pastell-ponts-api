@@ -12,7 +12,7 @@ class PontBDD extends MySQL {
   }
   /** Insère un appel service en base de données.
     * @param nom_service Le nom du service appeller. */
-  async insererAppelService(nom_service){
+  async debuterAppelService(nom_service){
     var resultat = await super.executerSync("select f_appel_service("+super.formaterVarchar(nom_service)+") as id_appel");
     return resultat.id_appel;
   }
@@ -59,6 +59,12 @@ class PontBDD extends MySQL {
     }) // FIN : Insertion du document en base de données.
     .catch(function(erreur) { throw erreur; })
   }
-  /** Insère en base de données la fin de gestion d'un document Pastell.*/
+  /** Insère en base de données la fin de gestion d'un document Pastell.
+    * @param id_appel L'identifiant de l'appel.
+    * @param succes Le succes de l'appel. */
+  finirAppel(id_appel, succes) {
+    super.executerAsync("call p_finir_appel("+id_appel+", "+succes+")");
+  }
+
 }
 module.exports = PontBDD;

@@ -37,7 +37,6 @@ class SignaturePieceMarcheRoutine extends Tache {
     var swp = new PastellService();
     var swa = new AlfrescoService();
     var traceur = new Traceur(parametres.SERVICE+'-routine', super.obtenirCorpsRequete().body);
-
     // Vérification des préconditions.
     traceur.debuterAction('Vérification des préconditions.');
     var preconditions = this.verifierPreconditions();
@@ -56,100 +55,37 @@ class SignaturePieceMarcheRoutine extends Tache {
       // Récupérationd es données de la requête.
       donnees = preconditions.donnees;
     }
-
     // Récupération des informations inérent au dossier Pastell.
     traceur.debuterAction('Récupération des informations inérentes au dossier Pastell (entité : '+donnees.id_entite+', document: '+donnees.id_document+').');
     swp.obtenirDetailDocument(donnees.id_entite, donnees.id_document)
     .then(function(document) {
-
       // La récupération du document est ok.
       traceur.finirAction(true);
-
       // Récupération de l'identifiant Alfresco en base de données.
       traceur.debuterAction("Récupération de l'identifiant Alfresco du fichier à signer en base de données.")
       pont_bdd.obtenirIdFichiersAlfresco(donnees.id_entite, donnees.id_document, parametres.PIECE_SIGNEE)
       .then(function( id_alfresco_fichier_piece_signee) {
-
         // Indication de la fin de l'action avec succès.
         traceur.finirAction(true);
-
         // Teste de l'existence de L'identifiant alfresco en base de données.
         if(id_alfresco_fichier_piece_signee.length == 0) {
           throw { erreur : "Le dossier n'existe pas dans la base de données de l'application." };
           return;
         }
-
         // Récupération des infomrations du noeud/fichier alfresco.
         traceur.debuterAction("Récupération des infomrations du noeud/fichier alfresco ("+id_alfresco_fichier_piece_signee+").");
         swa.detailNoeud(id_alfresco_fichier_piece_signee[0].id_alfresco)
         .then(function(noeud) {
-
           // Indication de la fin de l'action avec succès.
           traceur.finirAction(true);
-
-          // Récupération des documents de la pièce signé marché.
-          traceur.debuterAction('Récupération des documents de la pièce signé marché.');
-          tache.obtenirFichiers(donnees.id_entite, donnees.id_document)
-          .then(function(fichiers) {
-            // Indication de la fin de l'action avec succès.
-            traceur.finirAction(true);
-
-            // Ajout des données du fichier de métadonnées.
-            fichiers['metadonnees'] = tache.obtenirContenuFichierMetadonnees(document);
-            // Récupération du noms de dossier de versement dans la GED.
-            var nom_dossier = tache.obtenirNomDossier(noeud.entry.name);
-
-            // Suppression du dossier à créer en GED.
-            traceur.debuterAction("Suppression du dossier en GED")
-            swa.supprimerNoeudEnfantParNom(noeud.entry.parentId, nom_dossier)
-            .then(function(suppression) {
-              // Indication de la fin de l'action avec succès.
-              traceur.finirAction(true);
-
-              // Création du dossier en GED.
-              traceur.debuterAction("Création du dossier '"+nom_dossier+"' en GED")
-              swa.creerNoeud(noeud.entry.parentId, nom_dossier, "cm:folder")
-              .then(function(dossier) {
-                // Indication de la fin de l'action avec succès.
-                traceur.finirAction(true);
-
-                // Dépôt des fichiers en GED.
-                traceur.debuterAction("Dépôt des fichiers en GED.")
-                tache.envoyerFichiersVersAfresco(dossier.entry.id, fichiers).then(function() {
-                  // Indication de la fin de l'action avec succès.
-                  traceur.finirAction(true);
-
-                  // Envoie au client de la réponse.
-                  tache.gererSucces(traceur);
-                  // Dévérouillage du noeud (pièce à signée) en GED.
-                  swa.deverouillerNoeud(id_alfresco_fichier_piece_signee[0].id_alfresco);
-                  // Indication en base de données que la gestion du document est terminer.
-
-
-                }) // FIN : Dépôt des fichiers en GED.
-                // ERREUR : Dépôt des fichiers en GED.
-                .catch(function(erreur) { tache.gererErreurNiveau2(traceur, erreur, dossier.entry.id) });
-
-              }) // FIN : Création du dossier en GED.
-              // ERREUR : Création du dossier en GED.
-            .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur, dossier.entry.id) });
-
-            }) // FIN : Suppression du dossier à créer en GED.
-            // ERREUR : Suppression du dossier à créer en GED.
-            .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur) });
-
-          }) // FIN : 'Récupération des documents de la pièce signé marché.
-          // ERREUR : Récupération des documents de la pièce signé marché.
-          .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur) });
-
+          // Mise à jour des métadonnées du document à signer.
+          console.log(document);
         }) // FIN : Récupération des infomrations du noeud/fichier alfresco.
         // ERREUR : Récupération des infomrations du noeud/fichier alfresco.
         .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur) });
-
       }) // FIN : Récupération de l'identifiant Alfresco en base de données.
       // ERREUR : // Récupération de l'identifiant Alfresco en base de données.
       .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur) });
-
     }) // FIN : Récupération des informations inérent au dossier Pastell.
     // ERREUR : Récupération des informations inérent au dossier Pastell.
     .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); });
@@ -158,15 +94,16 @@ class SignaturePieceMarcheRoutine extends Tache {
     * @param traceur Le traceur d'actions. */
   gererSucces(traceur) {
     // Fin e l'action de récupération des informations pastell.
-    traceur.finirAction(true);;
+    traceur.finirAction(true);
+    // Fin de l'appel.
+    traceur.finirTrace(true, parametres.MESSAGE_SUCCES_ROUTINE);
     // Envoie de la réponse.
-    this.envoiReponse(200, traceur.JSON(parametres.MESSAGE_SUCCES_ROUTINE));
+    this.envoiReponse(200, traceur);
   }
   /** Gère une erreur de niveau 2.
     * @param traceur Le traceur d'erreur.
     * @param erreur L'erreur levé. */
   gererErreurNiveau2(traceur, erreur, id_dossier_cree) {
-    console.log(id_dossier_cree);
     // Suppression du dossier.
     var swa = new AlfrescoService();
     swa.supprimerNoeudAsync(id_dossier_cree);
@@ -181,8 +118,10 @@ class SignaturePieceMarcheRoutine extends Tache {
     traceur.finirAction(false);
     // Initialisation de l'erreur.
     traceur.log(erreur);
+    // Fin de l'appel de la tache.
+    traceur.finirTrace(false, parametres.MESSAGE_ERREUR_ROUTINE);
     // Envoie de la réponse.
-    this.envoiReponse(500, traceur.JSON(parametres.MESSAGE_ERREUR_ROUTINE));
+    this.envoiReponse(500, traceur);
   }
   /** Méthode permettant d'obtenir le nom de dossier du fichier à signer.
     * @param nom_fichier Le nom du fichier. */
