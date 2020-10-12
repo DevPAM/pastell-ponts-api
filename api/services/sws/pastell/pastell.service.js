@@ -47,10 +47,9 @@ class PastellService {
     return liste[index].id_e;
   }
   /** Méthode permetant de créer un document dans pastell.
-    * @param nom_entite L'identifiant de l'entité ou créé le dossier Pastell.
+    * @param id_entite L'identifiant de l'entité ou créé le dossier Pastell.
     * @param type_document Le type de document à creer dans l'entite. */
-  async creerDocument(nom_entite, type_document) {
-    var id_entite = await this.obtenirEntite(nom_entite);
+  async creerDocument(id_entite, type_document) {
     // Création du document.
     return (await new CreerDocument(id_entite, type_document).appeler());
   }
@@ -61,13 +60,12 @@ class PastellService {
     return await appel.appeler();
   }
   /** Méthode permettant d'attacher un fichier à un document.
-    * @param nom_entite Le nom de l'entite.
+    * @param id_entite Identifiant de l'entite.
     * @param id_document L'identifiant du document pastell.
     * @param id_parametre L'identifiant du paramètre sur lequel attacher le fichier.
     * @param index L'index du fichier sur le paramètre.
     * @param fichier Le fichier à joindre. */
-  async atacherFichierDocument(nom_entite, id_document, id_parametre, index, fichier) {
-    var id_entite = await this.obtenirEntite(nom_entite);
+  async atacherFichierDocument(id_entite, id_document, id_parametre, index, fichier) {
     var appel = new AttacherFichierDocument(id_entite, id_document, id_parametre, index, fichier);
     return await appel.appeler();
   }
@@ -75,8 +73,7 @@ class PastellService {
     * @param id_entite L'identifiant alfresco du document.
     * @param id_document L'id_entifiant du document.
     * @param action L'action à executer. */
-  async lancerActionDocument(nom_entite, id_document, action) {
-    var id_entite = await this.obtenirEntite(nom_entite);
+  async lancerActionDocument(id_entite, id_document, action) {
     var appel = new ActionDocument(id_entite, id_document, action);
     return await appel.appeler();
   }
