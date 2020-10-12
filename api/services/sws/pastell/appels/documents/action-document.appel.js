@@ -11,10 +11,10 @@ class ActionDocument extends PastellAppelService {
     super('POST', 'entite/'+id_entite+'/document/'+id_document+'/action/'+action);
   }
   /** Invoque le service. */
-  appeler() {
+  async appeler() {
     // Appel du service
-    var retour = super.appelSync();
-    var resultat = retour.json();
+    var retour = await super.appelSync();
+    var resultat = await retour.json();
     // Vérification du retour service.
     if(retour.status != 200 && retour.status != 201) throw resultat;
     // Retour du résulat.
@@ -28,7 +28,7 @@ class ActionDocument extends PastellAppelService {
     var fetch = super.appelAsync();
     fetch(super.obtenirHote()+super.obtenirService(), options)
     .then(reponse => reponse.json())
-    .then(function(json) { console.log(json); return; })
+    .then(function(json) { return; })
     .catch(function(erreur) { throw erreur; }); ;
   }
 }

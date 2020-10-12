@@ -21,12 +21,12 @@ class SignaturePieceMarcheService extends Tache {
   verifierPreconditions() {
     var message = "";
     var donnees = super.obtenirCorpsRequete();
-    if( !('nomDossier' in donnees) || donnees['nomDossier'] == null ) message += 'Veuillez saisir le nom de dossier.\n';
-    if( !('directionOperationnelle' in donnees) || donnees['directionOperationnelle'] == null ) message += 'Veuillez saisir la direction opérationnelle.\n';
-    if( !('objetConsultation' in donnees) || donnees['objetConsultation'] == null ) "Veuillez saisir l'objet de la consulation.";
-    if( !('numeroMarche' in donnees) || donnees['numeroMarche'] == null ) message += 'Veuillez saisir le numéro de marché.';
-    if( !('numeroConsultation' in donnees) || donnees['numeroConsultation'] == null ) message += 'Veuillez saisir le numéro de consultation.';
-    if( !('idDocumentASigner' in donnees) || donnees['idDocumentASigner'] == null ) message += 'Veuillez joindre un fichier à signer.';
+    if( !('nomDossier' in donnees) || Chaine.estNullOuVide(donnees['nomDossier']) ) message += 'Veuillez saisir le nom de dossier.\n';
+    if( !('directionOperationnelle' in donnees) || Chaine.estNullOuVide(donnees['directionOperationnelle'])) message += 'Veuillez saisir la direction opérationnelle.\n';
+    if( !('objetConsultation' in donnees) || Chaine.estNullOuVide(donnees['objetConsultation'])) "Veuillez saisir l'objet de la consulation.";
+    if( !('numeroMarche' in donnees) || Chaine.estNullOuVide(donnees['numeroMarche'])) message += 'Veuillez saisir le numéro de marché.';
+    if( !('numeroConsultation' in donnees) || Chaine.estNullOuVide(donnees['numeroConsultation'])) message += 'Veuillez saisir le numéro de consultation.';
+    if( !('idDocumentASigner' in donnees) || Chaine.estNullOuVide(donnees['idDocumentASigner'])) message += 'Veuillez joindre un fichier à signer.';
 
     if( Chaine.estNullOuVide(message) ) return { respect : true, donnees : donnees };
     return { respect : false, message : message };
@@ -37,7 +37,7 @@ class SignaturePieceMarcheService extends Tache {
     var tache = this;
     var donnees = null;
     var fichiers = { } ;
-    var pont_bdd = new PontBDD();
+    var bdd = new PontBDD();
     var swp = new PastellService();
     var swa = new AlfrescoService();
     var traceur = new Traceur(parametres.SERVICE+'-service', super.obtenirCorpsRequete().body);
@@ -49,7 +49,7 @@ class SignaturePieceMarcheService extends Tache {
       traceur.finirAction(true);
       // Vérification des préconditions.
       traceur.debuterAction("Vérification des préconditions.")
-      var preconditions = this.verifierPreconditions();
+      var preconditions = tache.verifierPreconditions();
       // Si les préconditions ne sont pas respecté arret de la routine.
       if(!preconditions.respect){
         // Trace du résultat de la préconditions.
@@ -63,6 +63,7 @@ class SignaturePieceMarcheService extends Tache {
         donnees = preconditions.donnees;
       }
       // Vérouillage du noeud.
+      traceur.debuterAction("Vérouillage du noeud Alfresco : '"+donnees.idDocumentASigner+"'.")
       swa.verouillerNoeud(donnees.idDocumentASigner)
       .then(function(verrouillage) {
         // Trace du résultat du vérouillage.
@@ -75,36 +76,36 @@ class SignaturePieceMarcheService extends Tache {
           traceur.finirAction(true);
           // Récupération des documents annexes.
           traceur.debuterAction("Récupération des documents annexes.");
-          tache.obtenirNomsContenusNoeuds(donnees.idDocumentsAnnexes)
+          swa.obtenirNomsContenusNoeuds(donnees.idDocumentsAnnexes)
           .then(function(fichiers_annexes) {
             // Trace du résultat de récupération des fichiers annexes.
             traceur.finirAction(true);
             // Création du document Pastell.
             traceur.debuterAction("Création du document Pastell.")
-            tache.creerDocument(parametres.ENTITE, parametres.DOCUMENT)
+            swp.creerDocument(parametres.ENTITE, parametres.DOCUMENT)
             .then(function(document) {
               // Trace du résultat de la création du document.
               traceur.finirAction(true);
               // Modification des données du document.
-              tache.modifierDocumentCommandePublique(document.id_e, document.id_d, donnees.nomDossier, donnees.directionOperationnelle, donnees.numeroConsultation, donnees.objetConsultation, donnees.numeroMarche)
-              .then(document_modifier) {
-                // Trace du résultat de modification du document.
+              traceur.debuterAction("Modification du dossier créer (entite : "+parametres.ENTITE+", document : "+document.id_d+ ").")
+              tache.modifierDocumentCommandePublique(parametres.ENTITE, document.id_d, donnees.nomDossier, donnees.directionOperationnelle, donnees.numeroConsultation, donnees.objetConsultation, donnees.numeroMarche)
+              .then(function(document_modifier) {              // Trace du résultat de modification du document.
                 traceur.finirAction(true);
                 // Ajout du fichier à signer au document.
                 traceur.debuterAction("Ajout du fichier à signer au document.")
-                swp.atacherFichierDocument(document.id_e, document.id_d, "document_a_signer", null, fichier_a_signer)
+                swp.atacherFichierDocument(parametres.ENTITE, document.id_d, "document_a_signer", null, fichier_a_signer)
                 .then(function(ajout_fichier_a_signer){
                   // Trace du résultat de modification du document.
                   traceur.finirAction(true);
                   // Ajout des fichiers annexes au document.
                   traceur.debuterAction("Ajout du fichier à signer au document.");
-                  tache.ajouterFichierAnnexes(document.id_e, document.id_d, fichiers_annexes)
+                  tache.ajouterFichierAnnexes(parametres.ENTITE, document.id_d, fichiers_annexes)
                   .then(function(ajouter_fichiers_annexes) {
                     // Trace de l'ajout des fichiers annexes au document.
                     traceur.finirAction(true);
                     // Vérification que le document est prêt pour lson orientation.
                     traceur.debuterAction("Vérification que le document est prêt pour son orientation.");
-                    var verification = ajouterFichierAnnexes == null ? ajout_fichier_a_signer : ajouter_fichiers_annexes;
+                    var verification = ajouter_fichiers_annexes == null ? ajout_fichier_a_signer : ajouter_fichiers_annexes;
                     if(verification.formulaire_ok == 0) {
                       tache.gererErreurNiveau4(traceur, { message : verification.message }, donnees.idDocumentASigner, document, verification.message);
                       return;
@@ -113,52 +114,68 @@ class SignaturePieceMarcheService extends Tache {
                     traceur.finirAction(true);
                     // Envoi du document vers son orientation.
                     traceur.debuterAction("Envoi du document vers son orientation.");
-                    swp.lancerActionDocument(document.id_e, document.id_d, "orientation")
+                    swp.lancerActionDocument(parametres.ENTITE, document.id_d, "orientation")
                     .then(function(lancement_action) {
                       traceur.finirAction(true);
                       // Envoie de la réponse au client.
-                      tache.gererSucces(traceur, id_appel);
+                      tache.gererSucces(traceur, id_appel, document, donnees.idDocumentASigner);
+                      return;
                     }) // FIN : Envoi du document vers son orientation.
                     // ERREUR : Envoi du document vers son orientation.
-                    .catch( function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, document); } )
+                    .catch( function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, document) } )
                   }) // FIN : Ajout des fichiers annexes au document.
                   // ERREUR : Ajout des fichiers annexes au document.
-                  .catch(function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, document); })
+                  .catch(function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, document) })
                 }) // FIN : Ajout du fichier à signer au document.
                 // ERREUR : Ajout du fichier à signer au document.
-                .catch(function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, document); })
-              } // FIN : Modification des données du document.
+                .catch(function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, document) })
+              }) // FIN : Modification des données du document.
               // ERREUR : Modification des données du document.
-              .catch(function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, document); })
+              .catch(function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, document) })
             }) // FIN : Création du document Pastell.
             // ERREUR : Création du document Pastell.
-            .catch(function(erreur) { gererErreurNiveau2(traceur, erreur, id_appel, donnees.idDocumentASigner); })
+            .catch(function(erreur) { tache.gererErreurNiveau2(traceur, erreur, id_appel, donnees.idDocumentASigner) })
           }) // FIN : Récupération des documents annexes.
           // ERREUR : Récupération des documents annexes.
-          .catch(function(erreur) { tache.gererErreurNiveau2(traceur, erreur, id_appel, donnees.idDocumentASigner); });
+          .catch(function(erreur) { tache.gererErreurNiveau2(traceur, erreur, id_appel, donnees.idDocumentASigner) });
         }) // FIN : Récupération du fichier à signer.
         // ERREUR : Récupération du fichier à signer
-        .catch(function(erreur) { tache.gererErreurNiveau2(traceur, erreur, id_appel, donnees.idDocumentASigner); })
+        .catch(function(erreur) { tache.gererErreurNiveau2(traceur, erreur, id_appel, donnees.idDocumentASigner) })
       }) // FIN : Vérouillage du noeud.
       // FIN ERREUR : Vérouillage du noeud.
-      .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur, id_appel); })
+      .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur, id_appel) })
     }) // FIN : Insertion en base de données de l'appel service.
     // ERREUR : Insertion en base de données de l'appel service.
-    .catch(function(erreur) { tache.gererErreurNiveau0(traceur, erreur); });
+    .catch(function(erreur) { tache.gererErreurNiveau0(traceur, erreur) });
   }
   /** Méthode peremttant de gérer le succes de l'appel du service.
     * @param id_appel L'identifiant d'un appel service.
     * @param document Le document Pastell. */
-  gererSucces(traceur, id_appel, document) {
+  gererSucces(traceur, id_appel, document, id_fichier) {
+    var swp = new PastellService();
     var bdd = new PontBDD();
+    var tache = this;
     // Fin de l'appel.
     bdd.finirAppel(id_appel, 1);
-    // Ajout des documents au dossier en base de données.
-    bdd.insererDocumentFichier(id_appel, document.id_e, document.id_d, parametres.DOCUMENT, id_fichier);
-    // Trace de la fin du service.
-    traceur.finirTrace(true, parametres.MESSAGE_SUCCES_SERVICE);
-    // Envoie de la réponse au client.
-    this.envoiReponse(500, traceur);
+    swp.obtenirEntite(parametres.ENTITE)
+    .then(function(id_entite) {
+      // Ajout des documents au dossier en base de données.
+      bdd.insererDocumentFichier(id_appel, id_entite, document.id_d, parametres.PIECE_SIGNEE, id_fichier);
+      // Ajout des données.
+      traceur.ajouterDonnees("id_entite_pastell", id_entite);
+      traceur.ajouterDonnees("id_document_pastell", document.id_d);
+      // Trace de la fin du service.
+      traceur.finirTrace(true, parametres.MESSAGE_SUCCES_SERVICE);
+      // Envoie de la réponse au client.
+      tache.envoiReponse(200, traceur);
+    }).catch(function( erreur ) {
+      // Ajout des données.
+      traceur.ajouterDonnees("id_document_pastell", document.id_d);
+      // Trace de la fin du service.
+      traceur.finirTrace(true, parametres.MESSAGE_SUCCES_SERVICE);
+      // Envoie de la réponse au client.
+      tache.envoiReponse(200, traceur);
+    });
   }
   /** Gère une erreur de niveau 4.
     * @param traceur Le traceur d'erreur.
@@ -169,20 +186,16 @@ class SignaturePieceMarcheService extends Tache {
     var swa = new AlfrescoService();
     var swp = new PastellService();
     var bdd = new PontBDD();
-    // Suppression du document su Pastell.
-    swp.lancerActionDocument(id_document);
     // Dévérouillage du noued.
     if(id_noeud != null) swa.deverouillerNoeud(id_noeud);
     // Suppression du document su Pastell.
-    if(document != null) swp.lancerActionDocumentAsync(document.id_e, document.id_d, "suppression");
+    if(document != null) swp.lancerActionDocumentAsync(parametres.ENTITE, document.id_d, "suppression");
     // Fin de l'appel.
     bdd.finirAppel(id_appel, 0);
-    // Fin e l'action de récupération des informations pastell.
-    traceur.finirAction(false);
     // Initialisation de l'erreur.
     traceur.log(erreur);
     // Fin de l'appel.
-    finirTrace(false, message)
+    traceur.finirTrace(false, message)
     // Envoie de la réponse.
     this.envoiReponse(500, traceur);
   }
@@ -194,7 +207,7 @@ class SignaturePieceMarcheService extends Tache {
   gererErreurNiveau3(traceur, erreur, id_appel, id_noeud, document) {
     var swp = new PastellService();
     // Suppression du document su Pastell.
-    swp.lancerActionDocumentAsync(document.id_e, document.id_d, "suppression");
+    swp.lancerActionDocumentAsync(parametres.ENTITE, document.id_d, "supression");
     // Suite de la gestion d'erreur.
     this.gererErreurNiveau2(traceur,erreur,id_appel,id_noeud);
   }
@@ -217,7 +230,7 @@ class SignaturePieceMarcheService extends Tache {
   gererErreurNiveau1(traceur, erreur, id_appel){
     var bdd = new PontBDD();
     // Find e l'appel.
-    bdd.finirAppel(id_appel, id_noeud);
+    bdd.finirAppel(id_appel, 0);
     // Dévérouillage du noued
     this.gererErreurNiveau0(traceur, erreur);
   }
@@ -231,27 +244,29 @@ class SignaturePieceMarcheService extends Tache {
     // Initialisation de l'erreur.
     traceur.log(erreur);
     // Fin de l'appel service.
-    traceur.finirTrace(false, parametres.MESSAGE_ERREUR_ROUTINE)
+    traceur.finirTrace(false, parametres.MESSAGE_ERREUR_SERVICE)
     // Envoie de la réponse.
     this.envoiReponse(500, traceur);
   }
   /** Permet de récupérer le contenu d'un noeud et son nom de fichier.
     * @param id_noeud L'identifiant du noeud. */
-  obtenirNomContenuNoeud(id_noeud) {
+  async obtenirNomContenuNoeud(id_noeud) {
     var swa = new AlfrescoService();
     var detail = await swa.detailNoeud(id_noeud);
-    return { nom : detail.entry.name, id_parent : detail.parentId, contenu : await swa.obtenirListeNoeudsEnfants(id_noeud) };
+    var contenu = await swa.obtenirContenuNoeud(id_noeud);
+    return { nom : detail.entry.name, id_parent : detail.parentId, contenu : contenu };
   }
   /** Méthode permettant de modifier un document de la commmande publique.
-    * @param id_entite L'identifiant de l'entite.
+    * @param nom_entite L'identifiant de l'entite.
     * @param id_document L'identifiant du document.
     * @param nom_dossier Le nom du dossier.
     * @param direction_operationnelle La direction opérationnelle.
     * @param numero_consultation Le numero de la consultation.
     * @param objet_consultation L'objet de la consultation.
     * @param numero_marche Le numéro du marché. */
-  async modifierDocumentCommandePublique(id_entite, id_document, nom_dossier, direction_operationnelle, numero_consultation, objet_consultation, numero_marche) {
+  async modifierDocumentCommandePublique(nom_entite, id_document, nom_dossier, direction_operationnelle, numero_consultation, objet_consultation, numero_marche) {
     var swp = new PastellService();
+    var id_entite = await swp.obtenirEntite(nom_entite);
     // Initialisation des données.
     var donnees = { nom_dossier: nom_dossier, direction_operationnelle: direction_operationnelle, numero_consultation: numero_consultation, objet_consultation : objet_consultation, numero_marche : numero_marche, iparapheur_sous_type : 'SS_Type_signatures_marchés', iparapheur_type : 'Type_signature_marchés' };
     // Appel du service.
@@ -272,4 +287,4 @@ class SignaturePieceMarcheService extends Tache {
   }
 }
 // Export du module.
-module.exports = SignaturePieceMarcheRoutine;
+module.exports = SignaturePieceMarcheService;

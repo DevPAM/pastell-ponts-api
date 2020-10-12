@@ -29,10 +29,10 @@ class ExecuterRoutineService extends Tache {
   executer() {
     var donnees = super.obtenirCorpsRequete();
     var traceur =  null;
-    if( super.estAppelWeb() ) traceur = new Traceur(parametres.SERVICE+'-service', super.obtenirCorpsRequete().body);
+    if( super.estAppelWeb() ) traceur = new Traceur(parametres.SERVICE+'-service', super.obtenirCorpsRequete());
     else traceur = new Traceur(parametres.SERVICE+'-routine', super.obtenirCorpsRequete().body);
     // Si les préconditions ne sont pas respecté arret de la routine.
-    traceur.debuterAction("Récupértion de ta tache permettant d'exectuer le la routine.");
+    traceur.debuterAction("Vérification des préconditions permettant d'exectuer le la routine.");
     var preconditions = this.verifierPreconditions();
     if(!preconditions.respect){
       // Trace du résultat de la préconditions.
@@ -45,7 +45,7 @@ class ExecuterRoutineService extends Tache {
     // Récupérationd es données de la requête.
     donnees = preconditions.donnees;
     // Récupération de ta tache permettant d'exectuer le la routine.
-    traceur.debuterAction("Récupértion de ta tache permettant d'exectuer le la routine.");
+    traceur.debuterAction("Récupération de ta tache permettant d'exectuer le la routine.");
     var chemin_fichier = Chemin.rechercheFichier(parametres.CHEMIN, donnees.nom_routine+'-routine.tache.js');
     if(chemin_fichier == null) {
       // Trace du résultat de la préconditions.
@@ -62,9 +62,11 @@ class ExecuterRoutineService extends Tache {
   /** Gère le succès de la tache. */
   gererSucces(traceur) {
     // Fin e l'action de récupération des informations pastell.
-    traceur.finirAction(true);;
+    traceur.finirAction(true);
+    // Fin du tracage.
+    traceur.finirTrace(true, null);
     // Envoie de la réponse.
-    this.envoiReponse(200, traceur.JSON(parametres.MESSAGE_SUCCES_ROUTINE));
+    this.envoiReponse(200, traceur);
   }
   /** Gère une erreur de niveau 1.
     * @param traceur Le traceur d'erreur.
@@ -74,8 +76,10 @@ class ExecuterRoutineService extends Tache {
     traceur.finirAction(false);
     // Initialisation de l'erreur.
     traceur.log(erreur);
+    // Fin du tracage.
+    traceur.finirTrace(true, message);
     // Envoie de la réponse.
-    this.envoiReponse(500, traceur.JSON(parametres.MESSAGE_ERREUR_ROUTINE));
+    this.envoiReponse(500, traceur);
   }
 }
 // Export de la classe.

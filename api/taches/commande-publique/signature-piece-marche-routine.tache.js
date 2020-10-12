@@ -73,7 +73,7 @@ class SignaturePieceMarcheRoutine extends Tache {
           return;
         }
         // Récupération des infomrations du noeud/fichier alfresco.
-        traceur.debuterAction("Récupération des infomrations du noeud/fichier alfresco ("+id_alfresco_fichier_piece_signee+").");
+        traceur.debuterAction("Récupération des infomrations du noeud/fichier alfresco ("+id_alfresco_fichier_piece_signee[0].id_alfresco+").");
         swa.detailNoeud(id_alfresco_fichier_piece_signee[0].id_alfresco)
         .then(function(noeud) {
           // Indication de la fin de l'action avec succès.
@@ -82,15 +82,15 @@ class SignaturePieceMarcheRoutine extends Tache {
           traceur.debuterAction("Mise à jour des métadonnées du document à signer.");
           swa.modifierNoeud(id_alfresco_fichier_piece_signee[0].id_alfresco,
             //{ properties: { date_mise_a_jour: tache.obtenirDate(), etat : etats[document.last_action.action], message_pastell : document.last_action.message, date_etat_pastell: document.last_action.date } }
-            { properties : { "cm:title" : "essai" } }
+            { properties : { "cm:title" : etats[document.last_action.action] } }
           )
           .then(function(noeud_modifier) {
             // Indication de la fin de l'action avec succès.
             traceur.finirAction(true);
             // Vérification que le dossier pastell est à l'état terminé avant de l'envoyer.
-            traceur.debuterAction("Vérification que le dossier pastell est à l'état terminer avant de l'envoyer.");
+            traceur.debuterAction("Vérification que le dossier pastell est à l'état terminer avant de poursuivre.");
             if( document.last_action.action != "termine" ) {
-              this.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
+              tache.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
               return;
             }else traceur.finirAction(true);
             // Création du dossier de reception des documents dans alfresco.
@@ -200,9 +200,7 @@ class SignaturePieceMarcheRoutine extends Tache {
     var swp = new PastellService();
     // Récupération du contenu des fichiers dans pastell.
     for(var i=0; i<parametres.FICHIERS.length; i++){
-      console.log(parametres.FICHIERS[i].nom_pastell);
       resultat[parametres.FICHIERS[i].nom_pastell] = await swp.obtenirFichier(id_entite, id_document, parametres.FICHIERS[i].nom_pastell);
-      console.log(resultat[parametres.FICHIERS[i].nom_pastell]);
     }
     // Retour du résultat.
     return resultat;

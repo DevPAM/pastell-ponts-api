@@ -66,19 +66,19 @@ class AlfrescoService {
   /** Verrouille un noued en GED.
     * @param id_noeud L'identifiant du noeud à verrouiller. */
   async verouillerNoeud(id_noeud){
-    var appel = new VerrouillerNoeud(id_noeud);
+    var appel = new VerouillerNoeud(id_noeud);
     return await appel.appeler();
   }
   /** Permet de récupérer le contenu d'un noeud.
     * @param id_noeud L'identifiant du noeud. */
-  async obtenirListeNoeudsEnfants() {
+  async obtenirListeNoeudsEnfants(id_noeud) {
     var appel = new ObtenirListeNoeudsEnfants(id_noeud);
     return await appel.appeler();
   }
   /** Méthode permettant de récupérer le contenu d'un noeud.
     * @param id_noeud L'identifiant du noeud. */
   async obtenirContenuNoeud(id_noeud) {
-    var appel = new ObtenirContenueNoeud();
+    var appel = new ObtenirContenueNoeud(id_noeud);
     return await appel.appeler();
   }
   /************* CUSTOM ******************/

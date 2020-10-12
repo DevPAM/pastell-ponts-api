@@ -12,7 +12,7 @@ class ObtenirContenueNoeud extends AlfrescoAppelService {
   /** Invoque le service. */
   async appeler() {
     // Invoquation du resultat.
-    var retour = await super.appeler();
+    var retour = await super.appelSync();
     var resultat = null;
     // Vérification du retour du service.
     if(retour.status != 200) throw (await retour.json());

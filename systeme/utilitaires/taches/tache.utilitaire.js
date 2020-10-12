@@ -31,12 +31,10 @@ class Tache {
     // Log de la réponse si la requête à un retour négatif.
     if(status != 200 && status != 202) {
       Logueur.error(traceur.TEXT());
-      if(env == 'DEV') console.log(traceur.JSON());
     }
+    if(env == 'DEV') console.log(traceur.JSON());
     // Vérification que la réponse existe.
-    if(!this.estAppelWeb()) return;
-    // Envoie de la réponse au client.
-    else this.reponse.status(status).send(traceur.JSON());
+    if(this.estAppelWeb()) this.reponse.status(status).send(traceur.JSON());
     // Fin
     return;
   }

@@ -36,4 +36,4 @@ class AttacherFichierDocument extends PastellAppelService {
   }
 }
 // Export de la classe.
-module.exports = DetailDocument;
+module.exports = AttacherFichierDocument;
