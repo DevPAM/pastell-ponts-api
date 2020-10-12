@@ -273,15 +273,15 @@ class SignaturePieceMarcheService extends Tache {
     return await swp.modifierDocument(id_entite, id_document, donnees);
   }
   /** Méthode permettant d'ajouter des fichiers annexes au document.
-    * @param id_entite L'identifiant de l'entité.
+    * @param id_entite Le nom de l'entité.
     * @param id_document L'identifiant du document.
     * @param fichiers_annexes Les fichiers annexes. */
-  async ajouterFichierAnnexes(id_entite, id_document, fichiers_annexes) {
+  async ajouterFichierAnnexes(nom_entite, id_document, fichiers_annexes) {
     var resultat = null;
     var swp = new PastellService();
     // Ajoute des fichier au sein du documents.
     for(var i=0; i<fichiers_annexes.length; i++)
-      resultat = await swp.atacherFichierDocument(document.id_e, document.id_d, 'documents_annexes', i, document_a_signer);
+      resultat = await swp.atacherFichierDocument(nom_entite, id_document, 'documents_annexes', i, fichiers_annexes[i]);
     // Retour du résultat.
     return resultat;
   }

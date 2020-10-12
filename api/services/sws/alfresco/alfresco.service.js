@@ -103,13 +103,13 @@ class AlfrescoService {
   }
   /** Méthode permettant de récupérer le contenu d'un neoud.
     * @param id_noeud L'identifiant Alfresco du noeud. */
-  async obtenirNomContenuNoeud(id_nieud) {
+  async obtenirNomContenuNoeud(id_noeud) {
     // Création du résultat.
     var resultat =  { };
     // Appel des service nécessaires.
     var detail_noeud = await this.detailNoeud(id_noeud);
     // Intiialisation du résultat.
-    resultat.contenu = await this.ObtenirContenueNoeud();
+    resultat.contenu = await this.obtenirContenuNoeud(id_noeud);
     resultat.nom = detail_noeud.entry.name;
     resultat.id_parent = detail_noeud.entry.parentId;
     // retour du resultat.
@@ -123,8 +123,9 @@ class AlfrescoService {
     // Creation du resulat.
     var resultat = [];
     // Récupération du contenues des fichiers.
-    for(var i=0; i<ids_noeuds.length; i++)
+    for(var i=0; i<ids_noeuds.length; i++){
       resultat.push(await this.obtenirNomContenuNoeud(ids_noeuds[i]));
+    }
     // Retour du résulat.
     return resultat;
   }

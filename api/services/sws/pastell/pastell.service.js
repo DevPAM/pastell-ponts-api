@@ -61,7 +61,7 @@ class PastellService {
     return await appel.appeler();
   }
   /** Méthode permettant d'attacher un fichier à un document.
-    * @param nom_entite L'identifiant de l'entite.
+    * @param nom_entite Le nom de l'entite.
     * @param id_document L'identifiant du document pastell.
     * @param id_parametre L'identifiant du paramètre sur lequel attacher le fichier.
     * @param index L'index du fichier sur le paramètre.
