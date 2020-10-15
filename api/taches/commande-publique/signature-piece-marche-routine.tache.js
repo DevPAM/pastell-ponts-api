@@ -92,7 +92,11 @@ class SignaturePieceMarcheRoutine extends Tache {
             if( document.last_action.action != "termine" ) {
               tache.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
               return;
-            }else traceur.finirAction(true);
+            }else if(document.last_action.action == "" || document.last_action.action == "") {
+              tache.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
+              return;
+            }
+            else traceur.finirAction(true);
             // Création du dossier de reception des documents dans alfresco.
             traceur.debuterAction("Création du dossier de reception des documents dans alfresco.");
             swa.creerNoeud(noeud.entry.parentId, tache.obtenirNomDossier(noeud.entry.name), "cm:folder")

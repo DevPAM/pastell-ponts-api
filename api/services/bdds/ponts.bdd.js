@@ -66,6 +66,15 @@ class PontBDD extends MySQL {
   finirAppel(id_appel, succes) {
     super.executerAsync("call p_finir_appel("+id_appel+", "+succes+")");
   }
-
+  /** Méthode permettant de récupérer la configuration d'un type de cron.
+    * @param type Le type de cron. */
+  async obtenirParametrageCron(type) {
+    return await super.executerSync("call p_obtenir_parametrage_cron('"+type+"')");
+  }
+  /** Permet d'obtenir les dossiers en cours d'un certains type.
+    * @param */
+  async obtenirDocumentsEnCours(type_document) {
+    return await super.executerSync("call p_obtenir_dossier_en_cours('"+type_document+"')");
+  }
 }
 module.exports = PontBDD;

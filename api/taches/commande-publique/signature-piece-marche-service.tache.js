@@ -95,7 +95,8 @@ class SignaturePieceMarcheService extends Tache {
                 // Modification des données du document.
                 traceur.debuterAction("Modification du dossier créer (entite : "+id_entite+", document : "+document.id_d+ ").")
                 tache.modifierDocumentCommandePublique(id_entite, document.id_d, donnees.nomDossier, donnees.directionOperationnelle, donnees.numeroConsultation, donnees.objetConsultation, donnees.numeroMarche)
-                .then(function(document_modifier) {              // Trace du résultat de modification du document.
+                .then(function(document_modifier) {
+                  // Trace du résultat de modification du document.
                   traceur.finirAction(true);
                   // Ajout du fichier à signer au document.
                   traceur.debuterAction("Ajout du fichier à signer au document.")

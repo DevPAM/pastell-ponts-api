@@ -6,7 +6,13 @@ var body = { body : { nomDossier : "Test1", directionOperationnelle : "DSI", obj
 var service = new ExecuterPiecesigneeService(body, null);
 service.executer();*/
 
-const ExecuterRoutineService = require('./api/taches/administration/executer-routine-service.tache.js');
+/*const ExecuterRoutineService = require('./api/taches/administration/executer-routine-service.tache.js');
 var body = { body : { nom_routine: 'signature-piece-marche', id_entite : 25, id_document : 'WeEjSlW' } };
 var service = new ExecuterRoutineService(body, null);
-service.executer();
+service.executer();*/
+
+/*const test = require('./systeme/utilitaires/chemins/chemin.utilitaire.js');
+console.log(test.rechercherFichiers('./api/taches', ".*-routine.tache.js"));*/
+
+const GestionnaireCron = require("./api/crons/gestionnaire-cron.cron.js");
+var gestionnaire = new GestionnaireCron();
