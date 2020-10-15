@@ -27,7 +27,6 @@ class Cron {
   }
   /** Demarre */
   demarrer() {
-    console.log("demarrage cron "+this.travail.type);
     this.travail.start();
   }
   /** Execute le cron. */
