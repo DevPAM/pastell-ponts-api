@@ -7,6 +7,8 @@ const Logueur = require('./../../systeme/utilitaires/loggueur/loggueur.utilitair
 class GestionnaireCron {
   /** Initialise une nouvelle instance de la classe GestionnaireCron. */
   constructor() {
+    console.log("Test Création");
+
     this.travaux = { } ;
     this.initialiser();
   }

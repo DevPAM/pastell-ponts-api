@@ -7,12 +7,15 @@ var routeur = express.Router();
 routeur.use(bodyParser.urlencoded({extended: false}));
 routeur.use(bodyParser.json());
 
-// Mise en pace du gestionnaire de crons.
-const gestinnaireCrons = new GestionnaireCron();
+// Récupération du gestionnaire de crons.
+const GestionnaireCron = require('./../api/crons/gestionnaire-cron.cron.js');
 
 // Récupération des tâches du services.
 const ExecuterRoutineService =  require('./../api/taches/administration/executer-routine-service.tache.js');
 const Flux = require('./../systeme/administration.systeme.js').flux.commande_publique;
+
+// Mise en pace du gestionnaire de crons.
+const gestinnaireCrons = new GestionnaireCron();
 
 /** Service permettant d'executer un service données. */
 routeur.post('/executer-routine', function(requete, retour){

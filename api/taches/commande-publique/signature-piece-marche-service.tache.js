@@ -162,13 +162,19 @@ class SignaturePieceMarcheService extends Tache {
     * @param id_appel L'identifiant d'un appel service.
     * @param document Le document Pastell. */
   gererSucces(traceur, id_appel, id_entite, document, id_fichier) {
+    var swa = new AlfrescoService();
     var swp = new PastellService();
     var bdd = new PontBDD();
     var tache = this;
     // Fin de l'appel.
     bdd.finirAppel(id_appel, 1);
+    // Mise à jour des métadonnées du document à signer.
+
     // Ajout des documents au dossier en base de données.
     bdd.insererDocumentFichier(id_appel, id_entite, document.id_d, parametres.PIECE_SIGNEE, id_fichier);
+    // Ajout des métaonnées sur le document.
+    // swa.modifierNoeud(id_fichier,  { properties : { "statut" : "Envoyé en signature", entite_pastell: id_entite, document_pastell : document.id_d, date_envoi_signature : Chaine.obtenirDate() } });
+    swa.modifierNoeud(id_fichier,  { properties : { "cm:title" : "Envoyé en signature" } });
       // Ajout des données.
     traceur.ajouterDonnees("id_entite_pastell", id_entite);
     traceur.ajouterDonnees("id_document_pastell", document.id_d);

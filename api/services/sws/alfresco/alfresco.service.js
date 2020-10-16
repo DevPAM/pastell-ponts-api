@@ -24,6 +24,12 @@ class AlfrescoService {
     var appel = new ModifierNoeud(id_noeud, proprietes);
     return await appel.appeler();
   }
+  /** Méthode permettant de modifier un noeud de manière asynchrone.
+    * @param id_noeud L'identifiant Alfresco du noeud. */
+  modifierNoeudAsync(id_noeud, proprietes) {
+    var appel = new ModifierNoeud(id_noeud, proprietes);
+    appel.appelerAsync();
+  }
   /** Méthode permettant de créer un noeud dans un noeud.
     * @param id_noeud_parent L'identifiant du noeud dans lequel créer le nouvel éléments.
     * @param nom_noeud Le nom du nouvel élement.
