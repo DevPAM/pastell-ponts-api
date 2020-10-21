@@ -29,6 +29,7 @@ create table doc_document(
     doc_id_appel int not null,
     doc_id_entite int not null,
     doc_id_document varchar(50) not null,
+    doc_etat_document varchar(50) not null,
     doc_debut datetime not null,
     doc_fin datetime null,
     suc_succes int null,
@@ -58,19 +59,4 @@ create table cro_cron(
 
 insert into ver_version(ver_nom)values('1.0.0');
 
-select * from ser_service;
-select * from app_appel;
-select * from doc_document;
-select * from fia_fichier_alfresco;
-select * from cro_cron;
-
 SET SQL_SAFE_UPDATES = 0;
-update fia_fichier_alfresco set fia_type = 'piece signee marche' where fia_id is not null;
-update cro_cron set cro_frequence = '0 */1 * * * *';
-
-drop table fia_fichier_alfresco;
-drop table doc_document;
-drop table app_appel;
-drop table ser_service;
-drop table ver_version;
-drop table cro_cron;

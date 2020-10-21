@@ -25,9 +25,10 @@ class PontBDD extends MySQL {
   /** Ajoute en base de données les informations du document pastell créé pour cette appel.
     * @param id_appel L'identifiant de l'appel service.
     * @param id_entite_document L'entite Pastell auquel est rattaché le document.
-    * @param id_document L'identifiant du document sur Pastell. */
-  async insererDocumentAppel(id_appel, id_entite_document, id_document) {
-    var resultat = await super.executerSync("select f_ajouter_document("+id_appel+", "+ id_entite_document+", "+super.formaterVarchar(id_document)+") as id_document");
+    * @param id_document L'identifiant du document sur Pastell.
+    * @param etat_initial L'état initial d'un document. */
+  async insererDocumentAppel(id_appel, id_entite_document, id_document, etat_initial) {
+    var resultat = await super.executerSync("select f_ajouter_document("+id_appel+", "+ id_entite_document+", "+super.formaterVarchar(id_document)+", '"+etat_initial+"') as id_document");
     return resultat.id_document;
   }
   /** Dans le cas d'une utilisation future: enregistre l'identifiant d'un fichier alfresco et son type.
@@ -49,12 +50,13 @@ class PontBDD extends MySQL {
     * @param id_appel L'identifiant de l'appel service.
     * @param id_entite_document L'entite Pastell auquel est rattaché le document.
     * @param id_document L'identifiant du document sur Pastell.
+    * @param etat_initial L'état initial du document Pastell.
     * @param type_fichier Le type de fichier pour ce document.
     * @param id_fichier L'identifiant alfresco du fichier. */
-  insererDocumentFichier(id_appel, id_entite_document, id_document, type_fichier, id_fichier){
+  insererDocumentFichier(id_appel, id_entite_document, id_document, etat_initial, type_fichier, id_fichier){
     var bdd = this;
     // Insertion du document en base de données.
-    bdd.insererDocumentAppel(id_appel, id_entite_document, id_document)
+    bdd.insererDocumentAppel(id_appel, id_entite_document, id_document, etat_initial)
     .then(function(id_doc) {
       bdd.insererFichierDocument(id_doc, type_fichier, id_fichier);
     }) // FIN : Insertion du document en base de données.

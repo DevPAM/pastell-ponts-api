@@ -57,17 +57,3 @@ begin
 	and doc.doc_fin is null;
 end !
 delimiter ;
-
-call p_finir_appel(1, 1);
-call p_terminer_appel(6, 1);
-call p_ajouter_fichier(1, 'piece signee marche', 'c10908c3-dea8-486c-98a6-4453f76f3419');
-call p_obtenir_id_alfresco(25, '97rIti9', 'piece signee marche');
-call p_obtenir_parametrage_cron('signature-piece-marche');
-call p_obtenir_dossier_en_cours('signature-piece-marche');
-
-drop procedure p_finir_appel;
-drop procedure p_terminer_appel;
-drop procedure p_ajouter_fichier;
-drop procedure p_obtenir_id_alfresco;
-drop procedure p_obtenir_parametrage_cron;
-drop procedure p_obtenir_dossier_en_cours;

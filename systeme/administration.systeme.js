@@ -34,7 +34,7 @@ module.exports = {
   },
   bdds : {
     ponts :{
-      DEV : { hote: 'localhost', login: 'root', mdp: 'root', bdd: 'ponts' },
+      DEV : { hote: 'localhost', login: 'root', mdp: 'root', bdd: 'pontapi' },
       REC : { hote: '', login: '', mdp: '', bdd: '' },
       PRO : { hote: '', login: '', mdp: '', bdd: '' },
     }

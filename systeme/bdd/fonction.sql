@@ -22,12 +22,12 @@ end !
 delimiter ;
 
 delimiter !
-create function f_ajouter_document(id_appel int, id_entite_document int, id_document varchar(50))
+create function f_ajouter_document(id_appel int, id_entite_document int, id_document varchar(50), etat_document varchar(50))
 returns int
 begin
 	if((select doc_id from doc_document where doc_id_appel = id_appel and doc_id_entite = id_entite_document and doc_id_document = id_document) is null) then
-		insert into doc_document(doc_id_appel, doc_id_entite, doc_id_document, doc_debut, doc_fin, suc_succes)
-        values(id_appel, id_entite_document, id_document, now(), null, null);
+		insert into doc_document(doc_id_appel, doc_id_entite, doc_id_document, doc_etat_document, doc_debut, doc_fin, suc_succes)
+        values(id_appel, id_entite_document, id_document, etat_document, now(), null, null);
         return last_insert_id();
 	end if;
     return (select doc_id from doc_document where doc_id_appel = id_appel and doc_id_entite = id_entite_document and doc_id_document = id_document);
@@ -47,12 +47,3 @@ begin
     return (select cro.cro_id from cro_cron cro join ser_service ser on ser.ser_id = cro.cro_id_service where cro.cro_id = id_service);
 end !
 delimiter ;
-
-select f_ajouter_cron('signature-piece-marche', '0 */5 * * * *');
-
-select * from ser_service;
-
-drop function f_ajouter_service;
-drop function f_appel_service;
-drop function f_ajouter_document;
-drop function f_ajouter_cron;

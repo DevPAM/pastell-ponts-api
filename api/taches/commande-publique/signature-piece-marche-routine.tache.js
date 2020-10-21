@@ -241,6 +241,11 @@ class SignaturePieceMarcheRoutine extends Tache {
       // Retour du résultat.
       return Buffer.from(JSON.stringify(resultat));
   }
+  /** Méthode permettant de canaliser le nom des états Pastell.
+    * @param etat_pastell Le nom de l'état pastell. */
+  obtenirEtat(etat_pastell) {
+    return null;
+  }
 }
 // Export du module.
 module.exports = SignaturePieceMarcheRoutine;
