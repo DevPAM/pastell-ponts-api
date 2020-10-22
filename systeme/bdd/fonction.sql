@@ -26,7 +26,7 @@ create function f_ajouter_document(id_appel int, id_entite_document int, id_docu
 returns int
 begin
 	if((select doc_id from doc_document where doc_id_appel = id_appel and doc_id_entite = id_entite_document and doc_id_document = id_document) is null) then
-		insert into doc_document(doc_id_appel, doc_id_entite, doc_id_document, doc_etat_document, doc_debut, doc_fin, suc_succes)
+		insert into doc_document(doc_id_appel, doc_id_entite, doc_id_document, doc_etat_document, doc_debut, doc_fin, doc_succes)
         values(id_appel, id_entite_document, id_document, etat_document, now(), null, null);
         return last_insert_id();
 	end if;

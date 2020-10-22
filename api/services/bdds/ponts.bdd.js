@@ -43,7 +43,7 @@ class PontBDD extends MySQL {
     * @param id_document L'identifiant du dossier Pastell.
     * @param type_fichier Le type de fichier rattaché au dossier. */
   async obtenirIdFichiersAlfresco(id_entite, id_document, type_fichier) {
-    console.log("call p_obtenir_id_alfresco("+id_entite+", "+ super.formaterVarchar(id_document) +", "+ super.formaterVarchar(type_fichier) +")");
+    //console.log("call p_obtenir_id_alfresco("+id_entite+", "+ super.formaterVarchar(id_document) +", "+ super.formaterVarchar(type_fichier) +")");
     return await super.executerSync("call p_obtenir_id_alfresco("+id_entite+", "+ super.formaterVarchar(id_document) +", "+ super.formaterVarchar(type_fichier) +")");
   }
   /** Insère un fichier alfresco relié à un document Pastell.
@@ -77,6 +77,10 @@ class PontBDD extends MySQL {
     * @param */
   async obtenirDocumentsEnCours(type_document) {
     return await super.executerSync("call p_obtenir_dossier_en_cours('"+type_document+"')");
+  }
+  /** Permet de mettre au document. */
+  async finirDocumentPastell(id_entite, id_document, etat, succes) {
+    return await super.executerSync("call p_finir_document("+id_entite+", "+ super.formaterVarchar(id_document) +", "+ super.formaterVarchar(etat) +", "+ succes +" )");
   }
 }
 module.exports = PontBDD;

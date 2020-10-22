@@ -32,7 +32,7 @@ create table doc_document(
     doc_etat_document varchar(50) not null,
     doc_debut datetime not null,
     doc_fin datetime null,
-    suc_succes int null,
+    doc_succes int null,
     constraint pk_document primary key(doc_id),
     constraint fk_document_id_appel foreign key(doc_id_appel)references app_appel(app_id)
 		on delete cascade on update cascade

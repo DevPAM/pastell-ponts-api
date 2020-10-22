@@ -17,11 +17,11 @@ module.exports = {
                     // Le bordereau de signature du document.
                     { nom: 'bordereau_signature.pdf', nom_pastell: 'bordereau_signature' },
                     // L'historique du iparapheur.
-                    { nom: 'iparapheur_historique.xml', nom_pastell: 'iparapheur_historique' },
+                    { nom: 'iparapheur_historique.xml', nom_pastell: 'iparapheur_historique' }/*,
                     // Accusé de reception du SAE
                     { nom: 'ar_sae.xml', nom_pastell: 'ar_sae' },
                     // Le bordereau d'envoie au SAE
-                    { nom: 'sae_bordereau.xml', nom_pastell: 'sae_bordereau' }
+                    { nom: 'sae_bordereau.xml', nom_pastell: 'sae_bordereau' }*/
         ]
       }
     },

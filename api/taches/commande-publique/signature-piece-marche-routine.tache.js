@@ -4,10 +4,14 @@ const Tache = require('./../../../systeme/utilitaires/taches/tache.utilitaire.js
 const AlfrescoService = require('./../../services/sws/alfresco/alfresco.service.js');
 const Chaine = require('./../../../systeme/utilitaires/chaines/chaine.utilitaire.js');
 const Traceur = require('./../../../systeme/utilitaires/traceur/traceur.utilitaire.js');
+const Logueur = require('./../../../systeme/utilitaires/loggueur/loggueur.utilitaire.js');
 
 const administration = require('./../../../systeme/administration.systeme.js');
 const parametres = administration.flux.commande_publique.piece_signee_marche;
 const etats = administration.etat_pastell;
+
+const xml2js = require('xml2js');
+var util = require('util');
 
 /** Classe permettant de gérer les pièces marché enregistrer en base. */
 class SignaturePieceMarcheRoutine extends Tache {
@@ -78,55 +82,71 @@ class SignaturePieceMarcheRoutine extends Tache {
         .then(function(noeud) {
           // Indication de la fin de l'action avec succès.
           traceur.finirAction(true);
-          // Mise à jour des métadonnées du document à signer.
-          traceur.debuterAction("Mise à jour des métadonnées du document à signer.");
-          swa.modifierNoeud(id_alfresco_fichier_piece_signee[0].id_alfresco,
-            //{ properties: { date_mise_a_jour: tache.obtenirDate(), etat : etats[document.last_action.action], message_pastell : document.last_action.message, date_etat_pastell: document.last_action.date } }
-            { properties : { "cm:title" : etats[document.last_action.action] } }
-          )
-          .then(function(noeud_modifier) {
-            // Indication de la fin de l'action avec succès.
+          // Récupération des métadonnées.
+          traceur.debuterAction("Récupération des métadonnées du dossier Pastell (entite: "+donnees.id_entite+", document : "+donnees.id_document+").");
+          tache.obtenirMetadonnees(donnees.id_entite, document)
+          .then(function(metadonnees) {
+            // Indication de la fin de récupération des métaonnées.
             traceur.finirAction(true);
-            // Vérification que le dossier pastell est à l'état terminé avant de l'envoyer.
-            traceur.debuterAction("Vérification que le dossier pastell est à l'état terminer avant de poursuivre.");
-            if( document.last_action.action != "termine" ) {
-              tache.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
-              return;
-            }else if(document.last_action.action == "" || document.last_action.action == "") {
-              tache.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
-              return;
-            }
-            else traceur.finirAction(true);
-            // Création du dossier de reception des documents dans alfresco.
-            traceur.debuterAction("Création du dossier de reception des documents dans alfresco.");
-            swa.creerNoeud(noeud.entry.parentId, tache.obtenirNomDossier(noeud.entry.name), "cm:folder")
-            .then(function(nouveau_noeud) {
-              // Indication de la fin de l'action avec succes.
+            // Mise à jour des métadonnées du document à signer.
+            traceur.debuterAction("Mise à jour des métadonnées du document à signer Alfresco ("+id_alfresco_fichier_piece_signee[0].id_alfresco+").");
+            swa.modifierNoeud(id_alfresco_fichier_piece_signee[0].id_alfresco,
+              // metadonnees
+              { properties : { "cm:title" : metadonnees.properties.etat } }
+            ).then(function(noeud_modifier) {
+              // Indication de la fin de l'action avec succès.
               traceur.finirAction(true);
-              // Récupération des documents (dans Pastell) pour envoie dans Alfresco.
-              traceur.debuterAction("Récupération des documents (dans Pastell) pour envoie dans Alfresco.")
-              tache.obtenirFichiers(donnees.id_entite, donnees.id_document)
-              .then(function(fichiers) {
-                // Indication de la fin de l'action avec succes.
-                traceur.finirAction(true);
-                // Envoie des documents vers Alfresco.
-                tache.envoyerFichiersVersAfresco(nouveau_noeud.entry.id, fichiers)
-                .then(function() {
+              console.log(noeud);
+              // Vérification de l'état du document pastell avant de poursuivre.
+              // Pas d'état == pas de changement = fin.
+              if(!('etat' in metadonnees.properties)) {
+                tache.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
+                return;
+              }
+              // Etat en erreur.
+              else if(metadonnees.properties.etat == "En erreur" || metadonnees.properties.etat == "Demande de signature refusée." ||
+                      metadonnees.properties.etat == "Archivage refusé.") {
+                    // Indiquer que le document est fini.
+                    traceur.debuterAction("Indication que le document est fini (entite: "+donnees.id_entite+", document : "+donnees.id_document+", etat : "+metadonnees.properties.etat+").");
+                    pont_bdd.finirDocumentPastell(donnees.id_entite, donnees.id_document, metadonnees.properties.etat, 0)
+                    .then(function(vide) {
+                      tache.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
+                      return;
+                    })// FIN : Indication que le document est fini.
+                    // ERREUR : Indication que le document est fini
+                    .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur) });
+              }
+              // Le document Pastell est dans un état final.
+              else if( metadonnees.properties.etat == "Signé et archivé." ) {
+                // Récupération des documents (dans Pastell) pour envoie dans Alfresco.
+                traceur.debuterAction("Récupération des documents (dans Pastell) pour envoie dans Alfresco.");
+                tache.obtenirFichiers(donnees.id_entite, donnees.id_document)
+                .then(function(fichiers){
                   // Indication de la fin de l'action avec succes.
                   traceur.finirAction(true);
-                  tache.gererSucces2(traceur, id_alfresco_fichier_piece_signee, donnees.id_entite, donnees.id_document, nouveau_noeud);
-                }) // Envoie des documents vers Alfresco.
-                // ERREUR : Envoie des documents vers Alfresco.
-                .catch(function(erreur) { tache.gererErreurNiveau2(traceur, erreur, nouveau_noeud.entry.id) })
-              })// FIN : Récupération des documents (dans Pastell) pour envoie dans Alfresco.
-              // ERREUR : Récupération des documents (dans Pastell) pour envoie dans Alfresco.
-              .catch(function(erreur) { tache.gererErreurNiveau2(traceur, erreur, nouveau_noeud.entry.id) })
-            }) // FIN : Création du dossier de reception des documents dans alfresco.
-            // ERREUR : Création du dossier de reception des documents dans alfresco.
+                  // Envoie des documents vers Alfresco.
+                  tache.envoyerFichiersVersAfresco(noeud.entry.parentId, fichiers)
+                  .then(function() {
+                    // Indiquer que le document est fini.
+                    traceur.debuterAction("Indication que le document est fini (entite: "+donnees.id_entite+", document : "+donnees.id_document+", etat : "+metadonnees.properties.etat+").");
+                    pont_bdd.finirDocumentPastell(donnees.id_entite, donnees.id_document, metadonnees.properties.etat, 1)
+                    .then(function(vide) {
+                      tache.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
+                      return;
+                    })// FIN : Indication que le document est fini.
+                  }) // Envoie des documents vers Alfresco.
+                  // ERREUR : Envoie des documents vers Alfresco.
+                  .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur) })
+                })// FIN : Récupération des documents (dans Pastell) pour envoie dans Alfresco.
+                // ERREUR : Récupération des documents (dans Pastell) pour envoie dans Alfresco.
+                .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur) });
+              }
+            }) // FIN : Mise à jour des métadonnées du document à signer.
+            // ERREUR : Mise à jour des métadonnées du document à signer.
             .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur) })
-          }) // FIN : Mise à jour des métadonnées du document à signer.
-          // ERREUR : Mise à jour des métadonnées du document à signer.
-          .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur) })
+          }) // FIN : Récupération des métadonnées.
+          // ERREUR : Récupération des métadonnées.
+          .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); });
         }) // FIN : Récupération des infomrations du noeud/fichier alfresco.
         // ERREUR : Récupération des infomrations du noeud/fichier alfresco.
         .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur) });
@@ -138,8 +158,10 @@ class SignaturePieceMarcheRoutine extends Tache {
     .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); });
   }
   /** Méthode permttant d'obtenir la date actuelle au format français. */
-  obtenirDate() {
-    var date = new Date();
+  obtenirDate(valeur) {
+    var date = null;
+    if(valeur == undefined || valeur == null) date = new Date();
+    else date = new Date(valeur);
     return date.getDate()+'/'+(date.getMonth()+1)+'/'+date.getFullYear()+' '+date.getHours()+':'+date.getMinutes()+':'+date.getSeconds()+':'+date.getMilliseconds();
   }
   /** Gère le succès de la tache de niveau 1.
@@ -203,9 +225,8 @@ class SignaturePieceMarcheRoutine extends Tache {
     var resultat = { };
     var swp = new PastellService();
     // Récupération du contenu des fichiers dans pastell.
-    for(var i=0; i<parametres.FICHIERS.length; i++){
+    for(var i=0; i<parametres.FICHIERS.length; i++)
       resultat[parametres.FICHIERS[i].nom_pastell] = await swp.obtenirFichier(id_entite, id_document, parametres.FICHIERS[i].nom_pastell);
-    }
     // Retour du résultat.
     return resultat;
   }
@@ -220,30 +241,62 @@ class SignaturePieceMarcheRoutine extends Tache {
         resultat = await swa.creationFichier(id_noeud_parent, parametres.FICHIERS[i].nom, fichiers[parametres.FICHIERS[i].nom_pastell]);
     return resultat;
   }
-  /** Permet d'obtenir le contenu JSON du fichier de metadonnées.
-    * @param Le detail du document Pastell. */
- obtenirContenuFichierMetadonnees(detail_fichier) {
-      var resultat = { };
-      // Ajout de la date.
-      var date = new Date();
-      resultat.date = date.getDate()+'/'+(date.getMonth()+1)+'/'+date.getFullYear()+' '+date.getHours()+'h '+date.getMinutes()+'min '+date.getSeconds()+'s '+date.getMilliseconds()+'ms';
-      resultat.etat = etats[detail_fichier.last_action.action];
-      resultat.iparapheur = { };
-      resultat.sae = { };
-      // Récupération du numéro du dossier i-parapheur.
-      if('iparapheur_dossier_id' in detail_fichier.data) resultat.iparapheur.id_dossier = detail_fichier.data.iparapheur_dossier_id;
-      // Récupération de l'identifiant de transfert SAE.
-      if('sae_transfert_id' in detail_fichier.data) resultat.sae.id_transfert = detail_fichier.data.sae_transfert_id;
-      // Récupération de l'identifiant de l'archive au sein du SAE.
-      if('sae_archival_identifier' in detail_fichier.data) resultat.sae.id_archive = detail_fichier.data.sae_archival_identifier;
-      // Récupération de l''adresse du l'archive du SAE.
-      if('url_archive' in detail_fichier.data) resultat.sae.id_transfert = detail_fichier.data.sae_transfert_id;
-      // Retour du résultat.
-      return Buffer.from(JSON.stringify(resultat));
+  /** Méthode permettant de récupérer les métadonnées d'un fichier.
+    * @param id_entite L'identifiant de l'
+    * @param document Les documents Pastell. */
+  async obtenirMetadonnees(id_entite, document){
+    // Mise à jour des élémnts basiques de la proprietes.
+    var proprietes = { date_mise_a_jour_cron : this.obtenirDate(), date_mise_a_jour_pastell : document.last_action.date };
+    // Récupération du l'URL de l'archive.
+    if("data" in document && "url_archive" in document.data) proprietes["url_archive"] = document.data.url_archive;
+    // Récupération des métadonnées de la signature.
+    var metadonnee_signature = null ;
+    try{ metadonnee_signature = await this.obtenirMetadonneesParapheur(id_entite, document.info.id_d);
+    }catch(erreur){ Logueur.error(erreur); }
+    // Récupération des métadonnées.
+    if(metadonnee_signature != null)
+      for (var cle in metadonnee_signature)
+        proprietes[cle] = metadonnee_signature[cle];
+    // Récupération de l'état du dossier Pastell.
+    var etat = this.obtenirEtat(document.last_action.action);
+    if(etat != null) proprietes["etat"] = etat;
+    // Retour du résultat.
+    return { properties: proprietes };
+  }
+  /** Permet d'obtenir les métadonnées du parapheur via son histirique.
+    * @param id_entite L'identifiant de l'entité Pastell auquel est rattaché le document.
+    * @param id_document L'identifiant du document Pastell. */
+  async obtenirMetadonneesParapheur(id_entite, id_document){
+    // Récupération du fichier d'historique du parapheur.
+    var swp = new PastellService();
+    var fichier = await swp.obtenirFichier(id_entite, id_document, "iparapheur_historique", null);
+    // Parsage du fichier d'historique: XML -> JSON.
+    var parseur = new xml2js.Parser({ attrkey: "ATTR" });
+    var parseString = util.promisify(parseur.parseString);
+    var historique = await parseString(fichier.toString());
+    // Récupération des éléments de signature.
+    var index = 0;
+    while(index < historique.iparapheur_historique.LogDossier[0].LogDossier.length &&
+          historique.iparapheur_historique.LogDossier[0].LogDossier[index].status[0] != 'Signe'){
+      index++;
+    }
+    if(index >=  historique.iparapheur_historique.LogDossier[0].LogDossier.length) return null;
+    return { date_signature : historique.iparapheur_historique.LogDossier[0].LogDossier[index].timestamp[0],
+             signataire :  historique.iparapheur_historique.LogDossier[0].LogDossier[index].nom[0] };
   }
   /** Méthode permettant de canaliser le nom des états Pastell.
     * @param etat_pastell Le nom de l'état pastell. */
   obtenirEtat(etat_pastell) {
+    // Cas optimales
+    if( etat_pastell == "rejet-iparapheur") return "Demande de signature refusée.";
+    else if( etat_pastell == "rejet-sae") return "Archivage refusé.";
+    else if( etat_pastell == "termine") return "Signé et archivé.";
+    // Cas d'erreur
+    else if(
+      etat_pastell == "verif-sae-erreur" || etat_pastell == "erreur-envoie-sae" || etat_pastell == "erreur-verif-iparapheur" ||
+      etat_pastell == "validation-sae-erreur" || etat_pastell == "verif-sae-erreur")
+      return "En erreur";
+    // Fin.
     return null;
   }
 }
