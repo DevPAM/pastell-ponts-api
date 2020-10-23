@@ -36,6 +36,16 @@ class Tache {
     // Fin
     return;
   }
+  /** */
+  envoiReponseSimple(status, message, resultat){
+    var res = { };
+    if(status != 200 && status != 202) res['succes'] = false;
+    else res['succes'] = true;
+    res['message'] = message;
+    res['resultat'] = resultat;
+    if(this.estAppelWeb()) this.reponse.status(status).send(res);
+    else if(env == 'DEV') console.log(res);
+  }
   /***** PRECONDITIONS *****/
   /** Vérifie que la requête fournit par le client est valide. */
   estRequeteValide() {

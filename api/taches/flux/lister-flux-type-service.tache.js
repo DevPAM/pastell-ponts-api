@@ -19,33 +19,30 @@ class ListerFluxService extends Tache {
     // Récupération en base de données.
     traceur.debuterAction("Récupération de la liste des documents disponible.");
     bdd.listerDocumentsParType(corps.type, corps.nom_pastell, corps.date_debut, corps.date_fin, corps.comparaison_debut, corps.comparaison_fin, corps.etat_document, corps.ordre, corps.direction)
-    .then(function(liste) {
-      tache.gererSucces(traceur, liste);
+    .then(function(donnees) {
+      tache.envoiReponseSimple(200, 'Ok', tache.traduire(donnees));
     })// FIN :  Récupération de la liste des documents disponible.
     // ERREUR : Récupération de la liste des documents disponible.
-    .catch(function(erreur) { tache.gererErreur(traceur, erreur); });
+    .catch(function(erreur) {
+      console.log(erreur);
+      tache.envoiReponseSimple(500, "Une erreur est survenue lors de la récupération des document du flux '"+corps.type+"'.", null);
+    });
   }
-  /** Gère le succès de l'appel du service.
-    * @param traceur Le traceur du service.
-    * @param liste La liste documents trouvés. */
-  gererSucces(traceur, liste) {
-    traceur.finirAction(true);
-    traceur.ajouterDonnees("resultat", liste);
-    // Trace de la fin du service.
-    traceur.finirTrace(true, "Ok");
-    // Envoie de la réponse au client.
-    this.envoiReponse(200, traceur);
-  }
-  /** Gère une erreur lors de l'appel du service.
-    * @param traceur Le traceur de su service.
-    * @param erreur L'exception ayant causé l'érreur. */
-  gererErreur(traceur, erreur){
-    traceur.finirAction(false);
-    traceur.finirTrace(false, "Une erreur est survenue lors de la récupération de la liste des documents.");
-    // Initialisation de l'erreur.
-    traceur.log(erreur);
-    // Envoie de la réponse.
-    this.envoiReponse(500, traceur);
+  /** Traduit les données 'RowPacketData' en JSON.
+    * @param donnees Les données à traduire. */
+  traduire(donnees) {
+    var resultat = [];
+    for(var i = 0; i < donnees.length; i++) resultat.push({
+      id: donnees[i].id,
+      id_service: donnees[i].id_service,
+      id_entite: donnees[i].id_entite,
+      id_pastell: donnees[i].id_pastell,
+      etat: donnees[i].etat,
+      date_debut: donnees[i].date_debut,
+      date_fin: donnees[i].date_fin,
+      succes: donnees[i].succes
+    });
+    return resultat;
   }
 };
 // Export de la classe.
