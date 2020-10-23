@@ -125,13 +125,13 @@ class SignaturePieceMarcheRoutine extends Tache {
                   // Indication de la fin de l'action avec succes.
                   traceur.finirAction(true);
                   // Envoie des documents vers Alfresco.
-                  tache.envoyerFichiersVersAfresco(noeud.entry.parentId, fichiers)
-                  .then(function() {
+                  tache.envoyerFichiersVersAfresco(noeud.entry.name, noeud.entry.parentId, fichiers)
+                  .then(function(envoie) {
                     // Indiquer que le document est fini.
                     traceur.debuterAction("Indication que le document est fini (entite: "+donnees.id_entite+", document : "+donnees.id_document+", etat : "+metadonnees.properties.etat+").");
                     pont_bdd.finirDocumentPastell(donnees.id_entite, donnees.id_document, metadonnees.properties.etat, 1)
                     .then(function(vide) {
-                      tache.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
+                      tache.gererSucces2(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
                       return;
                     })// FIN : Indication que le document est fini.
                   }) // Envoie des documents vers Alfresco.
@@ -166,8 +166,10 @@ class SignaturePieceMarcheRoutine extends Tache {
   }
   /** Gère le succès de la tache de niveau 1.
     * @param traceur Le traceur d'actions. */
-  gererSucces2(traceur, id_alfresco_fichier_piece_signee, id_entite, id_document, nouveau_noeud) {
-    traceur.ajouterDonnees("id_noeud_document", nouveau_noeud.entry.id);
+  gererSucces2(traceur, id_alfresco_fichier_piece_signee, id_entite, id_document) {
+    var swa = new AlfrescoService();
+    // Dévérouillage du document: pièce signé.
+    swa.deverouillerNoeud(id_alfresco_fichier_piece_signee);
     this.gererSucces1(traceur, id_alfresco_fichier_piece_signee, id_entite, id_document);
   }
   /** Gère le succès de la tache de niveau 1.
@@ -207,9 +209,9 @@ class SignaturePieceMarcheRoutine extends Tache {
     // Envoie de la réponse.
     this.envoiReponse(500, traceur);
   }
-  /** Méthode permettant d'obtenir le nom de dossier du fichier à signer.
+  /** Méthode permettant d'obtenir la base du nom de de fichier.
     * @param nom_fichier Le nom du fichier. */
-  obtenirNomDossier(nom_fichier) {
+  obtenirBaseFichier(nom_fichier) {
     // Retrait des caratères spéciaux.
     var resultat = nom_fichier.match(/(.*)\.[^\.]+$/)[1]
       .replace(/(é|ê|è)/g,'e')
@@ -225,20 +227,22 @@ class SignaturePieceMarcheRoutine extends Tache {
     var resultat = { };
     var swp = new PastellService();
     // Récupération du contenu des fichiers dans pastell.
-    for(var i=0; i<parametres.FICHIERS.length; i++)
+    for(var i=0; i<parametres.FICHIERS.length; i++){
       resultat[parametres.FICHIERS[i].nom_pastell] = await swp.obtenirFichier(id_entite, id_document, parametres.FICHIERS[i].nom_pastell);
-    // Retour du résultat.
+    }// Retour du résultat.
     return resultat;
   }
   /** Envoie une liste de fichiers Pastell vers Alfresco.
+    * @param nom_fichier Le nom du fichier.
     * @param id_noeud_parent L'identifiant du noeud parent dans lequel créer les fichiers.
     * @param fichiers Un objet JSON contenant tout les fichiers à transmettre. */
-  async envoyerFichiersVersAfresco(id_noeud_parent, fichiers) {
+  async envoyerFichiersVersAfresco(nom_fichier, id_noeud_parent, fichiers) {
     var swa = new AlfrescoService();
     var resultat = null;
+    var nom = this.obtenirBaseFichier(nom_fichier);
     for(var i = 0; i<parametres.FICHIERS.length; i++)
       if(fichiers[parametres.FICHIERS[i].nom_pastell] != null)
-        resultat = await swa.creationFichier(id_noeud_parent, parametres.FICHIERS[i].nom, fichiers[parametres.FICHIERS[i].nom_pastell]);
+        resultat = await swa.creationFichier(id_noeud_parent, nom + '_' +parametres.FICHIERS[i].nom, fichiers[parametres.FICHIERS[i].nom_pastell]);
     return resultat;
   }
   /** Méthode permettant de récupérer les métadonnées d'un fichier.
