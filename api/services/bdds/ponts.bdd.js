@@ -82,5 +82,18 @@ class PontBDD extends MySQL {
   async finirDocumentPastell(id_entite, id_document, etat, succes) {
     return await super.executerSync("call p_finir_document("+id_entite+", "+ super.formaterVarchar(id_document) +", "+ super.formaterVarchar(etat) +", "+ succes +" )");
   }
+  /** Permet de lister les documents par type.
+    * @param type Le type de document.
+    * @param nom_pastell Le nom pastell du document.
+    * @param date_debut La date de début de création du document.
+    * @param date_fin La date de fin de de gestion du document.
+    * @param comparaison_debut
+    * @param comparaison_fin
+    * @param etat_document
+    * @param ordre
+    * @param direction  */
+  async listerDocumentsParType(type, nom_pastell, date_debut, date_fin, comparaison_debut, comparaison_fin, etat_document, ordre, direction){
+    return await super.executerSync("call p_lister_document_par_type("+super.formaterVarchar(type)+", "+super.formaterVarchar(nom_pastell)+", "+super.formaterVarchar(date_debut)+", "+super.formaterVarchar(date_fin)+", "+super.formaterVarchar(comparaison_debut)+", "+super.formaterVarchar(comparaison_fin)+", "+super.formaterVarchar(etat_document)+", "+ super.formaterVarchar(ordre) +", "+ super.formaterVarchar(direction) +" )");
+  }
 }
 module.exports = PontBDD;

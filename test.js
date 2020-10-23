@@ -7,13 +7,18 @@ var service = new ExecuterPiecesigneeService(body, null);
 service.executer();*/
 
 
-const ExecuterRoutineService = require('./api/taches/administration/executer-routine-service.tache.js');
-var body = { body : { nom_routine: 'signature-piece-marche', id_entite : 25, id_document : 'LMlgGnx' } };
+/*const ExecuterRoutineService = require('./api/taches/administration/executer-routine-service.tache.js');
+var body = { body : { nom_routine: 'signature-piece-marche', id_entite : 25, id_document : 'p8RGwhJ' } };
 var service = new ExecuterRoutineService(body, null);
-service.executer();
+service.executer();*/
 
 /*const test = require('./systeme/utilitaires/chemins/chemin.utilitaire.js');
 console.log(test.rechercherFichiers('./api/taches', ".*-routine.tache.js"));*/
 
 /*const GestionnaireCron = require("./api/crons/gestionnaire-cron.cron.js");
 var gestionnaire = new GestionnaireCron();*/
+
+const ListerFluxTypeService = require('./api/taches/flux/lister-flux-type-service.tache.js');
+var body = { body : { type: 'signature-piece-marche', nom_pastell : null, date_debut : null, date_fin: null, comparaison_debut : null, comparaison_fin : null, etat_document : null, ordre:'doc_debut', direction : 'desc' } };
+var service = new ListerFluxTypeService(body, null);
+service.executer();

@@ -57,3 +57,38 @@ begin
 	and doc.doc_fin is null;
 end !
 delimiter ;
+
+delimiter !
+create procedure p_lister_document(nom_service varchar(50), id_pastell varchar(50), date_debut varchar(15), date_fin varchar(15), 
+								   date_debut_comparaison varchar(2), date_fin_comparaison varchar(2), etat varchar(100), ordre varchar(20), direction varchar(5))
+begin
+    set @requete := concat('select
+							doc.doc_id as id,
+							ser.ser_id as id_service,
+							doc.doc_id_entite as id_entite,
+							doc.doc_id_document as id_pastell,
+							doc.doc_etat_document as etat,
+                            DATE_FORMAT(doc.doc_debut, ''%d/%m/%Y %H:%i:%s'') as date_debut,
+							DATE_FORMAT(doc.doc_fin, ''%d/%m/%Y %H:%i:%s'')  as date_fin,
+							doc.doc_succes as succes
+						   from doc_document doc
+							join app_appel app on app.app_id = doc.doc_id_appel
+							join ser_service ser on ser.ser_id = app.app_id_service
+						   where ser.ser_nom = ''',nom_service,''' ');
+	if(id_pastell is not null) then
+		set @requete := concat(@requete, 'and doc.doc_id_document like ''%', id_pastell, '%'' ');
+    end if;
+    if(date_debut is not null) then
+		set @requete := concat(@requete, 'and date(doc.doc_debut) ', date_debut_comparaison , '''', date_debut,''' ');
+    end if;
+    if(date_fin is not null) then
+		set @requete := concat(@requete, 'and date(doc.doc_fin) ', date_fin_comparaison , '''', date_fin,''' ');
+    end if;
+    if(etat is not null) then
+		set @requete := concat(@requete, 'and doc_etat_document = ''', etat,''' ');
+    end if;
+    set @requete := concat(@requete, 'order by ',ordre, ' ', direction);
+    PREPARE ma_requete FROM @requete;
+    execute ma_requete;
+end !
+delimiter ;

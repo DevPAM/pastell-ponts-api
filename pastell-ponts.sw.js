@@ -14,10 +14,12 @@ api.use(cors());
 // Définition des routeurs utilisés.
 var commande_publique_routeur = require('./routeurs/commande-publique.routeur.js');
 var administration_routeur = require('./routeurs/administration.routeur.js');
+var flux = require('./routeurs/flux.routeur.js');
 
 // Utilisation des routeurs par l'API.
 api.use('/commande-publique', commande_publique_routeur);
 api.use('/administration', administration_routeur);
+api.use('/flux', flux);
 // api.use('/crons', cron)
 
 // Ouverture du port pour écoute.
