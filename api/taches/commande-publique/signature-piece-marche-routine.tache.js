@@ -186,16 +186,6 @@ class SignaturePieceMarcheRoutine extends Tache {
     // Envoie de la réponse.
     this.envoiReponse(200, traceur);
   }
-  /** Gère une erreur de niveau 2.
-    * @param traceur Le traceur d'erreur.
-    * @param erreur L'erreur levé. */
-  gererErreurNiveau2(traceur, erreur, id_dossier_cree) {
-    // Suppression du dossier.
-    var swa = new AlfrescoService();
-    swa.supprimerNoeudAsync(id_dossier_cree);
-    // Gestion de la suite de erreur
-    this.gererErreurNiveau1(traceur, erreur);
-  }
   /** Gère une erreur de niveau 1.
     * @param traceur Le traceur d'erreur.
     * @param erreur L'erreur lancer par le système. */
@@ -292,9 +282,9 @@ class SignaturePieceMarcheRoutine extends Tache {
     * @param etat_pastell Le nom de l'état pastell. */
   obtenirEtat(etat_pastell) {
     // Cas optimales
-    if( etat_pastell == "rejet-iparapheur") return "Demande de signature refusée.";
-    else if( etat_pastell == "rejet-sae") return "Archivage refusé.";
-    else if( etat_pastell == "termine") return "Signé et archivé.";
+    if( etat_pastell == "rejet-iparapheur") return "Demande de signature refusée";
+    else if( etat_pastell == "rejet-sae") return "Archivage refusé";
+    else if( etat_pastell == "termine") return "Signé et archivé";
     // Cas d'erreur
     else if(
       etat_pastell == "verif-sae-erreur" || etat_pastell == "erreur-envoie-sae" || etat_pastell == "erreur-verif-iparapheur" ||

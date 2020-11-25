@@ -33,6 +33,7 @@ class ListerFluxService extends Tache {
   traduire(donnees) {
     var resultat = [];
     for(var i = 0; i < donnees.length; i++) resultat.push({
+      selection: donnees[i].selection,
       id: donnees[i].id,
       id_service: donnees[i].id_service,
       id_entite: donnees[i].id_entite,
