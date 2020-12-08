@@ -104,8 +104,8 @@ class SignaturePieceMarcheRoutine extends Tache {
                 return;
               }
               // Etat en erreur.
-              else if(metadonnees.properties.etat == "En erreur" || metadonnees.properties.etat == "Demande de signature refusée." ||
-                      metadonnees.properties.etat == "Archivage refusé.") {
+              else if(metadonnees.properties.etat == "En erreur" || metadonnees.properties.etat == "Demande de signature refusée" ||
+                      metadonnees.properties.etat == "Archivage refusé") {
                     // Indiquer que le document est fini.
                     traceur.debuterAction("Indication que le document est fini (entite: "+donnees.id_entite+", document : "+donnees.id_document+", etat : "+metadonnees.properties.etat+").");
                     pont_bdd.finirDocumentPastell(donnees.id_entite, donnees.id_document, metadonnees.properties.etat, 0)
@@ -117,7 +117,7 @@ class SignaturePieceMarcheRoutine extends Tache {
                     .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur) });
               }
               // Le document Pastell est dans un état final.
-              else if( metadonnees.properties.etat == "Signé et archivé." ) {
+              else if( metadonnees.properties.etat == "Signé et archivé" ) {
                 // Récupération des documents (dans Pastell) pour envoie dans Alfresco.
                 traceur.debuterAction("Récupération des documents (dans Pastell) pour envoie dans Alfresco.");
                 tache.obtenirFichiers(donnees.id_entite, donnees.id_document)

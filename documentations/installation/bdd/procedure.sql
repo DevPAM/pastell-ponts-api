@@ -59,7 +59,7 @@ end !
 delimiter ;
 
 delimiter !
-create procedure p_lister_document(nom_service varchar(50), id_pastell varchar(50), date_debut varchar(15), date_fin varchar(15), 
+create procedure p_lister_document(nom_service varchar(50), id_pastell varchar(50), date_debut varchar(15), date_fin varchar(15),
 								   date_debut_comparaison varchar(2), date_fin_comparaison varchar(2), etat varchar(100), ordre varchar(20), direction varchar(5))
 begin
     set @requete := concat('select
@@ -90,5 +90,12 @@ begin
     set @requete := concat(@requete, 'order by ',ordre, ' ', direction);
     PREPARE ma_requete FROM @requete;
     execute ma_requete;
+end !
+delimiter ;
+
+delimiter !
+CREATE PROCEDURE p_finir_document(id_entite int, id_document varchar(50), etat varchar(50), succes int)
+begin
+	update doc_document set doc_fin = now(), doc_succes = succes, doc_etat_document = etat where doc_id_entite = id_entite and doc_id_document = id_document;
 end !
 delimiter ;
