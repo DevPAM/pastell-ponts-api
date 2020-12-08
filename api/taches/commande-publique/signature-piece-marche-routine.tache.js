@@ -96,7 +96,6 @@ class SignaturePieceMarcheRoutine extends Tache {
             ).then(function(noeud_modifier) {
               // Indication de la fin de l'action avec succès.
               traceur.finirAction(true);
-              console.log(noeud);
               // Vérification de l'état du document pastell avant de poursuivre.
               // Pas d'état == pas de changement = fin.
               if(!('etat' in metadonnees.properties)) {
