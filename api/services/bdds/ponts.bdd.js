@@ -95,5 +95,10 @@ class PontBDD extends MySQL {
   async listerDocumentsParType(type, nom_pastell, date_debut, date_fin, comparaison_debut, comparaison_fin, etat_document, ordre, direction){
     return await super.executerSync("call p_lister_document_par_type("+super.formaterVarchar(type)+", "+super.formaterVarchar(nom_pastell)+", "+super.formaterVarchar(date_debut)+", "+super.formaterVarchar(date_fin)+", "+super.formaterVarchar(comparaison_debut)+", "+super.formaterVarchar(comparaison_fin)+", "+super.formaterVarchar(etat_document)+", "+ super.formaterVarchar(ordre) +", "+ super.formaterVarchar(direction) +" )");
   }
+  /** Méthode permettant d'obtenir une version. */
+  async obtenirVersion(){
+    var resultat = await super.executerSync("select (f_obtenir_version()) as version");
+    return resultat.version;
+  }
 }
 module.exports = PontBDD;

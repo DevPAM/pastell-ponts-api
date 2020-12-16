@@ -47,3 +47,11 @@ begin
     return (select cro.cro_id from cro_cron cro join ser_service ser on ser.ser_id = cro.cro_id_service where cro.cro_id = id_service);
 end !
 delimiter ;
+
+delimiter !
+create function f_obtenir_version()
+returns nvarchar(10)
+begin
+	return (select ver_nom as version from ver_version);
+end !
+delimiter ;

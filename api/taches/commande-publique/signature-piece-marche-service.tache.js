@@ -248,7 +248,7 @@ class SignaturePieceMarcheService extends Tache {
     // Initialisation de l'erreur.
     traceur.log(erreur);
     // Fin de l'appel service.
-    traceur.finirTrace(false, parametres.MESSAGE_ERREUR_SERVICE)
+    traceur.finirTrace(false, parametres.MESSAGE_ERREUR_SERVICE);
     // Envoie de la réponse.
     this.envoiReponse(500, traceur);
   }
