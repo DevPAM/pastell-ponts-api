@@ -70,6 +70,7 @@ class MySql {
       connexion.query(requete, function(err, result){
         // Erreur lors de l'execution de la requête.
         if(err) console.log(err);
+        connexion.end();
         // La reqête s'et bien executé. fin.
         return;
       });
