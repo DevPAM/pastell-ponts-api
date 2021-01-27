@@ -1,3 +1,4 @@
+const Logueur = require('./../../loggueur/loggueur.utilitaire.js');
 var mysql = require('mysql');
 var util = require('util');
 
@@ -27,7 +28,10 @@ class MySql {
     });
     // En attente d'un connexion.
     await connexion.connect(function(erreur){
-      if(erreur) throw erreur;
+      if(erreur) {
+        Logueur.error(erreur);
+        throw erreur;
+      }
     });
     // Préparation du système de requêtage en Pomise.
     connexion.query = util.promisify(connexion.query);
@@ -39,12 +43,16 @@ class MySql {
   async executerSync(requete){
     var connexion = await this.obtenirConnexion();
 
-    if(connexion instanceof Error) throw  connexion.erreur;
+    if(connexion instanceof Error) {
+       Logueur.error(connexion.erreur);
+       throw connexion.erreur;
+    }
     var resultat = null;
     try {
       resultat = await connexion.query(requete);
     }catch(erreur){
       connexion.end();
+      Logueur.error(erreur)
       throw erreur;
     }
     connexion.end();
@@ -65,15 +73,17 @@ class MySql {
     // Test de la connexion.
     connexion.connect(function(erreur){
       // Connexion raté.
-      if(erreur) console.log(erreur);
-      // Execution de la requête.
-      connexion.query(requete, function(err, result){
-        // Erreur lors de l'execution de la requête.
-        if(err) console.log(err);
-        connexion.end();
-        // La reqête s'et bien executé. fin.
-        return;
-      });
+      if(erreur) Logueur.error(connexion.erreur); // console.log(erreur);
+      else {
+        // Execution de la requête.
+        connexion.query(requete, function(err, result){
+          // Erreur lors de l'execution de la requête.
+          if(err) Logueur.error(err); //console.log(err);
+          connexion.end();
+          // La reqête s'et bien executé. fin.
+          return;
+        });
+      }
     });
   }
   /** @meth formaterVariable Formatte une varible pour requete.
