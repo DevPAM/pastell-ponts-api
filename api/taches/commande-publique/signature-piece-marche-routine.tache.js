@@ -109,7 +109,7 @@ class SignaturePieceMarcheRoutine extends Tache {
                     traceur.debuterAction("Indication que le document est fini (entite: "+donnees.id_entite+", document : "+donnees.id_document+", etat : "+metadonnees.properties.etat+").");
                     pont_bdd.finirDocumentPastell(donnees.id_entite, donnees.id_document, metadonnees.properties.etat, 0)
                     .then(function(vide) {
-                      tache.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
+                      tache.gererSucces2(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
                       return;
                     })// FIN : Indication que le document est fini.
                     // ERREUR : Indication que le document est fini
