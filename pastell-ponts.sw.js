@@ -16,6 +16,9 @@ var commande_publique_routeur = require('./routeurs/commande-publique.routeur.js
 var administration_routeur = require('./routeurs/administration.routeur.js');
 var flux = require('./routeurs/flux.routeur.js');
 
+// valeurs d'adminsitration.
+var port = require('./systeme/administration.systeme.js').port;
+
 // Utilisation des routeurs par l'API.
 api.use('/commande-publique', commande_publique_routeur);
 api.use('/administration', administration_routeur);
@@ -23,9 +26,9 @@ api.use('/flux', flux);
 // api.use('/crons', cron)
 
 // Ouverture du port pour écoute.
-api.listen(8080, function(){
+api.listen(port, function(){
   console.log('*************************************************');
   console.log('*               PASTELL - PONTS                 *');
   console.log('*************************************************');
-  console.log(' +  Lancement du web service sur le port 80...');
+  console.log(' +  Lancement du web service sur le port '+port+'...');
 });
