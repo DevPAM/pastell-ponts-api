@@ -124,9 +124,35 @@ class SignaturePieceMarcheService extends Tache {
                       swp.lancerActionDocument(id_entite, document.id_d, "orientation")
                       .then(function(lancement_action) {
                         traceur.finirAction(true);
-                        // Envoie de la réponse au client.
-                        tache.gererSucces(traceur, id_appel, id_entite, document, donnees.idDocumentASigner);
-                        return;
+                        // Ajout des métadonnées liées à l'envoie vers Pastell.
+                        traceur.debuterAction(" Ajout des métadonnées liées à l'envoie vers Pastell.");
+                        swa.modifierNoeud(donnees.idDocumentASigner, {
+                          aspectNames: ["pastcm:pastellDoc","pastcm:documentPrincipal"],
+                          properties : {
+                            "pastcm:pastellNomDossier": donnees.nomDossier,
+                            "pastcm:pastellStatut": "Envoyé en signature",
+                            "pastcm:pastellDateSignature": new Date(),
+                            "pastcm:pastellDirSignataire": donnees.direction,
+                            "pastcm:pastellTypedoc": "Pièce principale",
+                            "pastcm:pastellFlux": "com-pub-pieces-signees",
+                            "pastcm:pastellIdEntite": id_entite,
+                            "pastcm:pastellIdDossier": id_entite }
+                        }).then(function(){
+                          traceur.finirAction(true);
+                          // Reverouillage du document à signer.
+                          traceur.debuterAction("Reverouillage du document à signer.");
+                          swa.verouillerNoeud(donnees.idDocumentASigner)
+                          .then(function(){
+                            traceur.finirAction(true);
+                            // Envoie de la réponse au client.
+                            //tache.gererSucces(traceur, id_appel, id_entite, document, donnees.idDocumentASigner);
+                            tache.gererSucces(traceur, id_appel, id_entite, document, donnees.idDocumentASigner);
+                            return;
+                          }) // FIN: du véroullage du fichier de signature.
+                          .catch(function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, id_entite, document) })
+                        }) // FIN : Ajout des métadonnées liées à l'envoie vers Pastell.
+                        // ERREUR : Ajout des métadonnées liées à l'envoie vers Pastell.
+                        .catch(function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, id_entite, document) })
                       }) // FIN : Envoi du document vers son orientation.
                       // ERREUR : Envoi du document vers son orientation.
                       .catch( function(erreur) { tache.gererErreurNiveau3(traceur, erreur, id_appel, donnees.idDocumentASigner, id_entite, document) } )
@@ -161,7 +187,7 @@ class SignaturePieceMarcheService extends Tache {
   /** Méthode peremttant de gérer le succes de l'appel du service.
     * @param id_appel L'identifiant d'un appel service.
     * @param document Le document Pastell. */
-  gererSucces(traceur, id_appel, id_entite, document, id_fichier) {
+  gererSucces(traceur, id_appel, id_entite, document, id_fichier/*, nom, direction*/) {
     var swa = new AlfrescoService();
     var swp = new PastellService();
     var bdd = new PontBDD();
@@ -172,7 +198,18 @@ class SignaturePieceMarcheService extends Tache {
     bdd.insererDocumentFichier(id_appel, id_entite, document.id_d, "Envoyé en signature", parametres.PIECE_SIGNEE, id_fichier);
     // Ajout des métaonnées sur le document.
     // swa.modifierNoeud(id_fichier,  { properties : { "statut" : "Envoyé en signature", entite_pastell: id_entite_pastell, id_document_pastell : document.id_d } });
-    swa.modifierNoeud(id_fichier,  { properties : { "cm:title" : "Envoyé en signature" } });
+    /*swa.modifierNoeud(id_fichier,  {
+      aspectNames: ["pastcm:pastellDoc","pastcm:documentPrincipal"],
+      properties : {
+        "pastcm:pastellNomDossier": nom,
+        "pastcm:pastellStatut": "Envoyé en signature",
+        "pastcm:pastellDateSignature": new Date(),
+        "pastcm:pastellDirSignataire": direction,
+        "pastcm:pastellTypedoc": "Pièce principale",
+        "pastcm:pastellFlux": "com-pub-pieces-signees",
+        "pastcm:pastellIdEntite": id_entite,
+        "pastcm:pastellIdDossier": document.id_d }
+    });*/
       // Ajout des données.
     traceur.ajouterDonnees("id_entite_pastell", id_entite);
     traceur.ajouterDonnees("id_document_pastell", document.id_d);

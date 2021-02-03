@@ -1,5 +1,6 @@
 module.exports = {
   env : 'DEV', // ('ENV'|'REC'|'PRO')
+  port: 8080,
   flux : {
     commande_publique : {
       piece_signee_marche  : {
