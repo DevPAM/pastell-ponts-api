@@ -14,7 +14,7 @@ class Tache {
   /***** GETTERS *****/
   /** Méthode permettant d'obtenir le corps de la requête cliente. */
   obtenirCorpsRequete() {
-    if(!this.estRequeteValide()) return null;
+    if(!this.estRequeteValide()) return null;    
     return this.requete.body;
   }
   /** Méthode permettant de récupérer la requete cliente. */

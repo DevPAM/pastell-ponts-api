@@ -40,7 +40,7 @@ class SignaturePieceMarcheService extends Tache {
     var bdd = new PontBDD();
     var swp = new PastellService();
     var swa = new AlfrescoService();
-    var traceur = new Traceur(parametres.SERVICE+'-service', super.obtenirCorpsRequete().body);
+    var traceur = new Traceur(parametres.SERVICE+'-service', super.obtenirCorpsRequete());
     // Insertion en base de données de l'appel service.
     traceur.debuterAction("Insertion en base de données de l'appel service : "+parametres.SERVICE)
     bdd.debuterAppelService(parametres.SERVICE)
@@ -126,18 +126,20 @@ class SignaturePieceMarcheService extends Tache {
                         traceur.finirAction(true);
                         // Ajout des métadonnées liées à l'envoie vers Pastell.
                         traceur.debuterAction(" Ajout des métadonnées liées à l'envoie vers Pastell.");
-                        swa.modifierNoeud(donnees.idDocumentASigner, {
+                        var metadonnees = {
                           aspectNames: ["pastcm:pastellDoc","pastcm:documentPrincipal"],
                           properties : {
                             "pastcm:pastellNomDossier": donnees.nomDossier,
                             "pastcm:pastellStatut": "Envoyé en signature",
-                            "pastcm:pastellDateSignature": new Date(),
-                            "pastcm:pastellDirSignataire": donnees.direction,
+                            "pastcm:pastellDateStatut": new Date(),
+                            "pastcm:pastellDateSignature": null,
+                            "pastcm:pastellDirSignataire": donnees.directionOperationnelle,
                             "pastcm:pastellTypedoc": "Pièce principale",
                             "pastcm:pastellFlux": "com-pub-pieces-signees",
                             "pastcm:pastellIdEntite": id_entite,
-                            "pastcm:pastellIdDossier": id_entite }
-                        }).then(function(){
+                            "pastcm:pastellIdDossier": document.id_d }
+                        };
+                        swa.modifierNoeud(donnees.idDocumentASigner, metadonnees).then(function(){
                           traceur.finirAction(true);
                           // Reverouillage du document à signer.
                           traceur.debuterAction("Reverouillage du document à signer.");

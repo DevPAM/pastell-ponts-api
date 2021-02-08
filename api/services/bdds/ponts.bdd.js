@@ -78,7 +78,7 @@ class PontBDD extends MySQL {
   async obtenirDocumentsEnCours(type_document) {
     return await super.executerSync("call p_obtenir_dossier_en_cours('"+type_document+"')");
   }
-  /** Permet de mettre au document. */
+  /** Permet de mettre à jour document. */
   async finirDocumentPastell(id_entite, id_document, etat, succes) {
     return await super.executerSync("call p_finir_document("+id_entite+", "+ super.formaterVarchar(id_document) +", "+ super.formaterVarchar(etat) +", "+ succes +" )");
   }
