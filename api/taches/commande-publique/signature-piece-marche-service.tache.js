@@ -124,10 +124,12 @@ class SignaturePieceMarcheService extends Tache {
                       swp.lancerActionDocument(id_entite, document.id_d, "orientation")
                       .then(function(lancement_action) {
                         traceur.finirAction(true);
+                        var aspects = fichier_a_signer.aspects;
+                        aspects.push("pastcm:pastellDoc"); aspects.push("pastcm:documentPrincipal");
                         // Ajout des métadonnées liées à l'envoie vers Pastell.
                         traceur.debuterAction(" Ajout des métadonnées liées à l'envoie vers Pastell.");
                         var metadonnees = {
-                          aspectNames: ["pastcm:pastellDoc","pastcm:documentPrincipal"],
+                          aspectNames: aspects,
                           properties : {
                             "pastcm:pastellNomDossier": donnees.nomDossier,
                             "pastcm:pastellStatut": "Envoyé en signature",
@@ -198,21 +200,7 @@ class SignaturePieceMarcheService extends Tache {
     bdd.finirAppel(id_appel, 1);
     // Ajout des documents au dossier en base de données.
     bdd.insererDocumentFichier(id_appel, id_entite, document.id_d, "Envoyé en signature", parametres.PIECE_SIGNEE, id_fichier);
-    // Ajout des métaonnées sur le document.
-    // swa.modifierNoeud(id_fichier,  { properties : { "statut" : "Envoyé en signature", entite_pastell: id_entite_pastell, id_document_pastell : document.id_d } });
-    /*swa.modifierNoeud(id_fichier,  {
-      aspectNames: ["pastcm:pastellDoc","pastcm:documentPrincipal"],
-      properties : {
-        "pastcm:pastellNomDossier": nom,
-        "pastcm:pastellStatut": "Envoyé en signature",
-        "pastcm:pastellDateSignature": new Date(),
-        "pastcm:pastellDirSignataire": direction,
-        "pastcm:pastellTypedoc": "Pièce principale",
-        "pastcm:pastellFlux": "com-pub-pieces-signees",
-        "pastcm:pastellIdEntite": id_entite,
-        "pastcm:pastellIdDossier": document.id_d }
-    });*/
-      // Ajout des données.
+    // Ajout des données.
     traceur.ajouterDonnees("id_entite_pastell", id_entite);
     traceur.ajouterDonnees("id_document_pastell", document.id_d);
     // Trace de la fin du service.
@@ -297,7 +285,17 @@ class SignaturePieceMarcheService extends Tache {
     var swa = new AlfrescoService();
     var detail = await swa.detailNoeud(id_noeud);
     var contenu = await swa.obtenirContenuNoeud(id_noeud);
-    return { nom : detail.entry.name, id_parent : detail.parentId, contenu : contenu };
+    return { nom : detail.entry.name, id_parent : detail.parentId, contenu : contenu, aspects : this.obtenirAspects(detail.entry.aspectNames) };
+  }
+  /** Permet d'obtenir aspects d'unn fichier.
+    * @param aspects_noeud Les aspects disponiblre d'un noeud.*/
+  obtenirAspects(aspects_noeud) {
+    if(aspects_noeud == undefined || aspects_noeud == null) return [];
+    var resultat = [];
+    for(var i=0; i<aspects_noeud.length; i++)
+      if(aspects_noeud[i].match(/^pastcm:.*/) == null)
+        resultat.push(aspects_noeud[i]);
+    return resultat;
   }
   /** Méthode permettant de modifier un document de la commmande publique.
     * @param id_entite L'identifiant de l'entite.
