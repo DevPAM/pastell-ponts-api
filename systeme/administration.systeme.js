@@ -41,7 +41,7 @@ module.exports = {
       PRO : { hote: '', type_aut: '', login: '', mdp: '' }
     },
     alfresco : {
-      DEV : { hote: 'https://gaia-siap.intranet.cg59.fr/alfresco/api/-default-/public/alfresco/versions/1/', type_aut: 'basic', login: 'admin', mdp: 'admin' },
+      DEV : { hote: 'https://gaia-siap.intranet.cg59.fr/alfresco/api/-default-/public/alfresco/versions/1/', type_aut: 'basic', login: 'admin', mdp: 'AdminSIAP!$59' },
       REC : { hote: '', type_aut: '', login: '', mdp: '' },
       PRO : { hote: '', type_aut: '', login: '', mdp: '' }
     }

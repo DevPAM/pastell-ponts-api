@@ -9,9 +9,10 @@ class CreerNoeud extends AlfrescoAppelService {
     * @param nom_noeud Le nom du noeud.
     * @param type_noeud Le type du noeud. */
   constructor(id_noeud_parent, nom_noeud, type_noeud) {
-    super('POST', 'nodes/'+id_noeud_parent+'/children');
+    super('POST', 'nodes/'+id_noeud_parent+'/children?autoRename=true');
     this.nom_noeud = nom_noeud;
     this.type_noeud = type_noeud;
+
   }
   /** Appel le service web. */
   async appeler() {
