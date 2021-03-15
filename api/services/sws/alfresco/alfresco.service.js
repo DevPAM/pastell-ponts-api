@@ -1,5 +1,6 @@
 const CreerNoeud = require('./appels/noeuds/creer_noeud.appel.js');
 const DetailNoeud = require('./appels/noeuds/detail_noeud.appel.js');
+const ExisterNoeud = require('./appels/noeuds/exister_noeud.appel.js');
 const ModifierNoeud = require('./appels/noeuds/modifier_noeud.appel.js');
 const SupprimerNoeud = require('./appels/noeuds/supprimer_noeud.appel.js');
 const VerouillerNoeud = require('./appels/noeuds/verouiller_noeud.appel.js');
@@ -16,6 +17,13 @@ class AlfrescoService {
     * @param id_noeud L'identifiant du noeud. */
   async detailNoeud(id_noeud) {
     var appel = new DetailNoeud(id_noeud);
+    return await appel.appeler();
+  }
+  /** Indique si le noeud existe ou non.
+    * @param id_noeud L'idenrifiant du noeud.
+    * @return true si le noeud existe. false sinon.*/
+  async existerNoeud(id_noeud) {
+    var appel = new ExisterNoeud(id_noeud);
     return await appel.appeler();
   }
   /** Méthode permettant de modifier un noeud.

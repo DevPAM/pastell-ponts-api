@@ -82,6 +82,14 @@ class PontBDD extends MySQL {
   async finirDocumentPastell(id_entite, id_document, etat, succes) {
     return await super.executerSync("call p_finir_document("+id_entite+", "+ super.formaterVarchar(id_document) +", "+ super.formaterVarchar(etat) +", "+ succes +" )");
   }
+  /**
+    * @param id_entite
+    * @param id_document
+    * @param etat
+    * @param succes */
+  finirDocumentPastellAsync(id_entite, id_document, etat, succes) {
+    return super.executerSync("call p_finir_document("+id_entite+", "+ super.formaterVarchar(id_document) +", "+ super.formaterVarchar(etat) +", "+ succes +" )");
+  }
   /** Permet de lister les documents par type.
     * @param type Le type de document.
     * @param nom_pastell Le nom pastell du document.

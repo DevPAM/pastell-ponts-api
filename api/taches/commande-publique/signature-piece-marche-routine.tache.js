@@ -76,29 +76,80 @@ class SignaturePieceMarcheRoutine extends Tache {
           throw { erreur : "Le dossier n'existe pas dans la base de données de l'application." };
           return;
         }
-        // Récupération des infomrations du noeud/fichier alfresco.
-        traceur.debuterAction("Récupération des infomrations du noeud/fichier alfresco ("+id_alfresco_fichier_piece_signee[0].id_alfresco+").");
-        swa.detailNoeud(id_alfresco_fichier_piece_signee[0].id_alfresco)
-        .then(function(noeud) {
-          // Indication de la fin de l'action avec succès.
-          traceur.finirAction(true);
-          // Vérification que le document Pastell est en état final.
-          traceur.debuterAction("Vérification que le document Pastell est en état final (entite : '"+ donnees.id_entite +"', document : '"+donnees.id_document+"').");
-          var etat_document = tache.obtenirEtat(document.last_action.action);
-          // Si l'état est null pas d'opérations : FIN.
-          if(etat_document == null) {
-            tache.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
-          }else {
+        // Teste de l'existance du fichier sur Alfresco.
+        traceur.debuterAction("Vérification que le noeud '"+ id_alfresco_fichier_piece_signee[0].id_alfresco +"' existe sur la GED.")
+        swa.existerNoeud(id_alfresco_fichier_piece_signee[0].id_alfresco)
+        .then(function(existe) {
+          // Si le fichier n'existe pas.
+          if(!existe) {
+            //
+            finirDocumentPastellAsync(donnees.id_entite, donnees.id_document, "Identifiant Alfresco "+id_alfresco_fichier_piece_signee[0].id_alfresco+" inconnu en GED.", 0);
+            tache.gererErreurNiveau1(traceur, { message:  "Identifiant Alfresco "+id_alfresco_fichier_piece_signee[0].id_alfresco+" inconnu en GED." });
+            return;
+          }
+          // Récupération des infomrations du noeud/fichier alfresco.
+          traceur.debuterAction("Récupération des infomrations du noeud/fichier alfresco ("+id_alfresco_fichier_piece_signee[0].id_alfresco+").");
+          swa.detailNoeud(id_alfresco_fichier_piece_signee[0].id_alfresco)
+          .then(function(noeud) {
+            // Indication de la fin de l'action avec succès.
             traceur.finirAction(true);
-            // Vérification de l'état Pastell.
-            if(etat_document == 'Demande de signature rejetée' || etat_document == 'Archivage refusé' || etat_document == 'Signé et archivé') {
-              // Récupération des métadonnées parapheur.
-              traceur.debuterAction("Récupération des métadonnées pour modification du noeud Alfresco ('"+id_alfresco_fichier_piece_signee[0].id_alfresco+"').");
-              tache.obtenirMetadonnees(donnees.id_entite, document)
-              //tache.obtenirMetadonneesParapheur(donnees.id_entite, document.info.id_d)
-              .then(function(metadonnees) {
-                // La récupération des métaonnées s'est déroulé avec succes.
-                traceur.finirAction(true);
+            // Vérification que le document Pastell est en état final.
+            traceur.debuterAction("Vérification que le document Pastell est en état final (entite : '"+ donnees.id_entite +"', document : '"+donnees.id_document+"').");
+            var etat_document = tache.obtenirEtat(document.last_action.action);
+            // Si l'état est null pas d'opérations : FIN.
+            if(etat_document == null) {
+              tache.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
+            }else {
+              traceur.finirAction(true);
+              // Vérification de l'état Pastell.
+              if(etat_document == 'Demande de signature rejetée' || etat_document == 'Archivage refusé' || etat_document == 'Signé et archivé') {
+                // Récupération des métadonnées parapheur.
+                traceur.debuterAction("Récupération des métadonnées pour modification du noeud Alfresco ('"+id_alfresco_fichier_piece_signee[0].id_alfresco+"').");
+                tache.obtenirMetadonnees(donnees.id_entite, document)
+                //tache.obtenirMetadonneesParapheur(donnees.id_entite, document.info.id_d)
+                .then(function(metadonnees) {
+                  // La récupération des métaonnées s'est déroulé avec succes.
+                  traceur.finirAction(true);
+                  // Modification du noeud Alfresco.
+                  traceur.debuterAction("Mise à jour de l'état du noeud alfresco selon son état (etat : '"+etat_document+"', '"+id_alfresco_fichier_piece_signee[0].id_alfresco+"').");
+                  swa.modifierNoeud(id_alfresco_fichier_piece_signee[0].id_alfresco, metadonnees)
+                  .then(function(noeud_modifie){
+                    // Indiciation que le noeud a été modifié avec succès.
+                    traceur.finirAction(true);
+                    // Indication en base de données que document a finit avec succès.
+                    pont_bdd.finirDocumentPastell(donnees.id_entite, donnees.id_document, metadonnees.properties['pastcm:pastellStatut'], ((etat_document == 'Signé et archivé') ? 1 : 0))
+                    .then(function(vide){
+                      // L'action s'est finit avec succès.
+                      traceur.finirAction(true);
+                      // Envoie des fichiers vers alfresco.
+                      if(etat_document == 'Signé et archivé') {
+                        // Récupération des documents (dans Pastell) pour envoie dans Alfresco.
+                        traceur.debuterAction("Récupération des documents (dans Pastell) pour envoie dans Alfresco.");
+                        tache.obtenirFichiers(donnees.id_entite, donnees.id_document)
+                        .then(function(fichiers) {
+                          traceur.finirAction(true);
+                          traceur.debuterAction("Envoie des documents vers Alfresco.");
+                          tache.envoyerFichiersVersAfresco(noeud.entry.name, noeud.entry.parentId, fichiers)
+                          .then(function(envoi){
+                            tache.gererSucces2(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
+                          }) // FIN : Envoie des fichiers vers alfresco.
+                          // ERREUR : Envoie des fichiers vers alfresco.
+                          .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); })
+                        }) // FIN :
+                        // ERREUR :
+                        .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); });
+                      } else  tache.gererSucces2(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
+                    }) // FIN : Indication en base de données que document a finit avec succès.
+                    // ERREUR : Indication en base de données que document a finit avec succès.
+                    .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); })
+                  }) // FIN : Modification du noeud Alfresco.
+                  // ERREUR : Modification du noeud Alfresco.
+                  .catch(function(erreur){ tache.gererErreurNiveau1(traceur, erreur); })
+                }) // FIN : Récupération des métadonnées parapheur.
+                // ERREUR : Récupération des métadonnées parapheur.
+                .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); })
+              }else {
+                var metadonnees = { properties : { "pastcm:pastellStatut": "En erreur", "pastcm:pastellDateStatut": new Date() } };
                 // Modification du noeud Alfresco.
                 traceur.debuterAction("Mise à jour de l'état du noeud alfresco selon son état (etat : '"+etat_document+"', '"+id_alfresco_fichier_piece_signee[0].id_alfresco+"').");
                 swa.modifierNoeud(id_alfresco_fichier_piece_signee[0].id_alfresco, metadonnees)
@@ -106,60 +157,24 @@ class SignaturePieceMarcheRoutine extends Tache {
                   // Indiciation que le noeud a été modifié avec succès.
                   traceur.finirAction(true);
                   // Indication en base de données que document a finit avec succès.
-                  pont_bdd.finirDocumentPastell(donnees.id_entite, donnees.id_document, metadonnees.properties['pastcm:pastellStatut'], ((etat_document == 'Signé et archivé') ? 1 : 0))
+                  pont_bdd.finirDocumentPastell(donnees.id_entite, donnees.id_document, metadonnees.properties['pastcm:pastellStatut'], 0)
                   .then(function(vide){
-                    // L'action s'est finit avec succès.
-                    traceur.finirAction(true);
-                    // Envoie des fichiers vers alfresco.
-                    if(etat_document == 'Signé et archivé') {
-                      // Récupération des documents (dans Pastell) pour envoie dans Alfresco.
-                      traceur.debuterAction("Récupération des documents (dans Pastell) pour envoie dans Alfresco.");
-                      tache.obtenirFichiers(donnees.id_entite, donnees.id_document)
-                      .then(function(fichiers) {
-                        traceur.finirAction(true);
-                        traceur.debuterAction("Envoie des documents vers Alfresco.");
-                        tache.envoyerFichiersVersAfresco(noeud.entry.name, noeud.entry.parentId, fichiers)
-                        .then(function(envoi){
-                          tache.gererSucces2(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
-                        }) // FIN : Envoie des fichiers vers alfresco.
-                        // ERREUR : Envoie des fichiers vers alfresco.
-                        .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); })
-                      }) // FIN :
-                      // ERREUR :
-                      .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); });
-                    } else  tache.gererSucces2(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
+                    tache.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
                   }) // FIN : Indication en base de données que document a finit avec succès.
                   // ERREUR : Indication en base de données que document a finit avec succès.
                   .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); })
                 }) // FIN : Modification du noeud Alfresco.
                 // ERREUR : Modification du noeud Alfresco.
                 .catch(function(erreur){ tache.gererErreurNiveau1(traceur, erreur); })
-              }) // FIN : Récupération des métadonnées parapheur.
-              // ERREUR : Récupération des métadonnées parapheur.
-              .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); })
-            }else {
-              var metadonnees = { properties : { "pastcm:pastellStatut": "En erreur", "pastcm:pastellDateStatut": new Date() } };
-              // Modification du noeud Alfresco.
-              traceur.debuterAction("Mise à jour de l'état du noeud alfresco selon son état (etat : '"+etat_document+"', '"+id_alfresco_fichier_piece_signee[0].id_alfresco+"').");
-              swa.modifierNoeud(id_alfresco_fichier_piece_signee[0].id_alfresco, metadonnees)
-              .then(function(noeud_modifie){
-                // Indiciation que le noeud a été modifié avec succès.
-                traceur.finirAction(true);
-                // Indication en base de données que document a finit avec succès.
-                pont_bdd.finirDocumentPastell(donnees.id_entite, donnees.id_document, metadonnees.properties['pastcm:pastellStatut'], 0)
-                .then(function(vide){
-                  tache.gererSucces1(traceur, id_alfresco_fichier_piece_signee[0].id_alfresco, donnees.id_entite, donnees.id_document);
-                }) // FIN : Indication en base de données que document a finit avec succès.
-                // ERREUR : Indication en base de données que document a finit avec succès.
-                .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); })
-              }) // FIN : Modification du noeud Alfresco.
-              // ERREUR : Modification du noeud Alfresco.
-              .catch(function(erreur){ tache.gererErreurNiveau1(traceur, erreur); })
+              }
             }
-          }
-        }) // FIN : Récupération des infomrations du noeud/fichier alfresco.
-        // ERREUR : Récupération des infomrations du noeud/fichier alfresco.
+          }) // FIN : Récupération des infomrations du noeud/fichier alfresco.
+          // ERREUR : Récupération des infomrations du noeud/fichier alfresco.
+          .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); });
+        }) // FIN: Fin de vérification de l'existance du fichier dans alfersco.
+        // ERREUR :
         .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); });
+
       }) // FIN : Récupération de l'identifiant Alfresco en base de données.
       // ERREUR : // Récupération de l'identifiant Alfresco en base de données.
       .catch(function(erreur) { tache.gererErreurNiveau1(traceur, erreur); });
