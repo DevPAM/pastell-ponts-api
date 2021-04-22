@@ -82,9 +82,10 @@ class SignaturePieceMarcheRoutine extends Tache {
         .then(function(existe) {
           // Si le fichier n'existe pas.
           if(!existe) {
-            //
-            finirDocumentPastellAsync(donnees.id_entite, donnees.id_document, "Identifiant Alfresco "+id_alfresco_fichier_piece_signee[0].id_alfresco+" inconnu en GED.", 0);
+            // Enregistrement de la fin du document en erreur.
+            pont_bdd.finirDocumentPastellAsync(donnees.id_entite, donnees.id_document, "Identifiant Alfresco "+id_alfresco_fichier_piece_signee[0].id_alfresco+" inconnu en GED.", 0);
             tache.gererErreurNiveau1(traceur, { message:  "Identifiant Alfresco "+id_alfresco_fichier_piece_signee[0].id_alfresco+" inconnu en GED." });
+            // Fin de l'action.
             return;
           }
           // Récupération des infomrations du noeud/fichier alfresco.
